@@ -16,7 +16,7 @@ import java.lang.annotation.Target;
  * record Server(String host, int port, @Nullable Duration timeout) {}
  * record Endpoint(String path, Set<String> methods) {}
  *
- * AppConfig config = Toml.parse(CharSource.of(file, StandardCharsets.UTF_8), AppConfig.class);
+ * AppConfig config = Toml.parse(file, AppConfig.class);
  * }</pre>
  *
  * <p>The annotation processor of the {@code be.imgn.toml:toml-processor} artifact generates the code that binds a table

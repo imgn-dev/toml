@@ -2,7 +2,7 @@ package be.imgn.toml.processor;
 
 import static java.util.Map.entry;
 
-import be.imgn.gaia.core.text.Case;
+import be.imgn.gaia.core.text.NamingConvention;
 import be.imgn.gaia.processing.MoreElements;
 import be.imgn.gaia.processing.ProcessingContext;
 import be.imgn.gaia.processing.ProcessingException;
@@ -128,7 +128,7 @@ final class BinderAnalyzer {
         var components = new ArrayList<Component>();
         context.forEach(type.getRecordComponents(), component -> {
             var name = component.getSimpleName().toString();
-            var key = key(component, name, Case.LOWER_CAMEL);
+            var key = key(component, name, NamingConvention.LOWER_CAMEL);
             if (!keys.add(key)) {
                 throw new ProcessingException("Another component already has the key \"" + key + "\"", component);
             }
@@ -151,7 +151,7 @@ final class BinderAnalyzer {
                 .toList();
         context.forEach(elements, constant -> {
             var name = constant.getSimpleName().toString();
-            var key = key(constant, name, Case.UPPER_SNAKE);
+            var key = key(constant, name, NamingConvention.UPPER_UNDERSCORE);
             if (!keys.add(key)) {
                 throw new ProcessingException("Another constant already has the key \"" + key + "\"", constant);
             }
@@ -160,15 +160,15 @@ final class BinderAnalyzer {
         return constants;
     }
 
-    private String key(Element element, String name, Case nameCase) {
+    private String key(Element element, String name, NamingConvention convention) {
         return context.annotation(element, TOML_KEY)
                 .map(annotation -> annotation.string("value"))
-                .orElseGet(() -> kebab(element, name, nameCase));
+                .orElseGet(() -> kebab(element, name, convention));
     }
 
-    private static String kebab(Element element, String name, Case nameCase) {
+    private static String kebab(Element element, String name, NamingConvention convention) {
         try {
-            return nameCase.to(Case.KEBAB, name);
+            return convention.to(NamingConvention.LOWER_HYPHEN, name);
         } catch (IllegalArgumentException e) {
             throw new ProcessingException(
                     "Cannot derive a key from the name " + name + ": give it one with @TomlKey", element);
