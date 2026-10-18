@@ -89,6 +89,33 @@ class TomlValueTest {
     }
 
     @Test
+    void arrayOfValues() {
+        assertThat(TomlArray.of(new TomlInteger(1), new TomlString("two")).values())
+                .containsExactly(new TomlInteger(1), new TomlString("two"));
+        assertThat(TomlArray.of().values()).isEmpty();
+    }
+
+    @Test
+    void arrayOfCopiesItsValues() {
+        var values = new TomlValue[] {new TomlInteger(1)};
+        var array = TomlArray.of(values);
+
+        values[0] = new TomlInteger(2);
+
+        assertThat(array.values()).containsExactly(new TomlInteger(1));
+    }
+
+    @Test
+    void arrayOfRejectsNull() {
+        assertThatNullPointerException()
+                .isThrownBy(() -> TomlArray.of(nullOf(TomlValue[].class)))
+                .withMessage("values");
+        assertThatNullPointerException()
+                .isThrownBy(() -> TomlArray.of(new TomlInteger(1), nullOf(TomlValue.class)))
+                .withMessage("values cannot contain null, as at index 1");
+    }
+
+    @Test
     void arrayCopiesItsValues() {
         var values = new ArrayList<TomlValue>(List.of(new TomlInteger(1)));
         var array = new TomlArray(values);

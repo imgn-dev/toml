@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.entry;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -83,6 +84,40 @@ class TomlTableTest {
         assertThat(TABLE.getLocalTime("local-time")).isEqualTo(LocalTime.of(7, 32));
         assertThat(TABLE.getArray("array").values()).containsExactly(new TomlInteger(1), new TomlInteger(2));
         assertThat(TABLE.getTable("server").getLong("port")).isEqualTo(8080);
+        assertThat(TABLE.getInt("server.port")).isEqualTo(8080);
+    }
+
+    @Test
+    void getsIntAtBoundsOfItsRange() {
+        var table = Toml.parse("""
+                min = -2147483648
+                max = 2147483647
+                """);
+
+        assertThat(table.getInt("min")).isEqualTo(Integer.MIN_VALUE);
+        assertThat(table.getInt("max")).isEqualTo(Integer.MAX_VALUE);
+    }
+
+    @Test
+    void intGetterRejectsIntegerOutOfRange() {
+        var table = Toml.parse("""
+                below = -2147483649
+                above = 2147483648
+                """);
+
+        assertThatExceptionOfType(ArithmeticException.class)
+                .isThrownBy(() -> table.getInt("below"))
+                .withMessage("the value of the key below is -2147483649, out of the range of int");
+        assertThatExceptionOfType(ArithmeticException.class)
+                .isThrownBy(() -> table.getInt("above"))
+                .withMessage("the value of the key above is 2147483648, out of the range of int");
+    }
+
+    @Test
+    void intGetterRejectsOtherType() {
+        assertThatExceptionOfType(ClassCastException.class)
+                .isThrownBy(() -> TABLE.getInt("float"))
+                .withMessage("the value of the key float is a TomlFloat, not a TomlInteger");
     }
 
     @Test
@@ -151,12 +186,88 @@ class TomlTableTest {
     }
 
     @Test
+    void builderPutsScalars() {
+        var offsetDateTime = OffsetDateTime.of(1979, 5, 27, 7, 32, 0, 0, ZoneOffset.UTC);
+        var localDateTime = LocalDateTime.of(1979, 5, 27, 7, 32);
+        var localDate = LocalDate.of(1979, 5, 27);
+        var localTime = LocalTime.of(7, 32);
+
+        var table = TomlTable.builder()
+                .put("string", "text")
+                .put("int", 8080)
+                .put("long", 42L)
+                .put("double", 3.5)
+                .put("boolean", true)
+                .put("offset-date-time", offsetDateTime)
+                .put("local-date-time", localDateTime)
+                .put("local-date", localDate)
+                .put("local-time", localTime)
+                .build();
+
+        assertThat(table.entries())
+                .containsExactly(
+                        entry("string", new TomlString("text")),
+                        entry("int", new TomlInteger(8080)),
+                        entry("long", new TomlInteger(42)),
+                        entry("double", new TomlFloat(3.5)),
+                        entry("boolean", new TomlBoolean(true)),
+                        entry("offset-date-time", new TomlOffsetDateTime(offsetDateTime)),
+                        entry("local-date-time", new TomlLocalDateTime(localDateTime)),
+                        entry("local-date", new TomlLocalDate(localDate)),
+                        entry("local-time", new TomlLocalTime(localTime)));
+    }
+
+    @Test
+    void builderRejectsInvalidScalarsWhenPut() {
+        var builder = TomlTable.builder();
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> builder.put("a", nullOf(String.class)))
+                .withMessage("value");
+        assertThatNullPointerException()
+                .isThrownBy(() -> builder.put("a", nullOf(OffsetDateTime.class)))
+                .withMessage("value");
+        assertThatNullPointerException()
+                .isThrownBy(() -> builder.put("a", nullOf(LocalDateTime.class)))
+                .withMessage("value");
+        assertThatNullPointerException()
+                .isThrownBy(() -> builder.put("a", nullOf(LocalDate.class)))
+                .withMessage("value");
+        assertThatNullPointerException()
+                .isThrownBy(() -> builder.put("a", nullOf(LocalTime.class)))
+                .withMessage("value");
+        assertThatNullPointerException()
+                .isThrownBy(() -> builder.put(nullOf(String.class), 1))
+                .withMessage("key");
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> builder.put("a", "\uD800"))
+                .withMessage("a string cannot contain the unpaired surrogate U+D800");
+        assertThatIllegalArgumentException().isThrownBy(() -> builder.put("a", LocalDate.of(10_000, 1, 1)));
+        assertThat(builder.build().entries()).isEmpty();
+    }
+
+    @Test
+    void toBuilderStartsFromEntriesOfTable() {
+        var table = TomlTable.builder().put("a", 1).put("b", 2).build();
+
+        var changed = table.toBuilder().put("a", 3).put("c", 4).build();
+
+        assertThat(changed.entries())
+                .containsExactly(
+                        entry("a", new TomlInteger(3)), entry("b", new TomlInteger(2)), entry("c", new TomlInteger(4)));
+        assertThat(table.entries()).containsExactly(entry("a", new TomlInteger(1)), entry("b", new TomlInteger(2)));
+    }
+
+    @Test
     void rejectsNullArguments() {
         assertThatNullPointerException()
                 .isThrownBy(() -> TABLE.get(nullOf(String.class)))
                 .withMessage("key");
         assertThatNullPointerException()
                 .isThrownBy(() -> TABLE.getLong(nullOf(String.class)))
+                .withMessage("key");
+        assertThatNullPointerException()
+                .isThrownBy(() -> TABLE.getInt(nullOf(String.class)))
                 .withMessage("key");
         assertThatNullPointerException()
                 .isThrownBy(() -> new TomlTable(Nulls.<String, TomlValue>nullMap()))

@@ -6,6 +6,8 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import be.imgn.toml.Toml;
 import be.imgn.toml.TomlMappingException;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import org.assertj.core.api.ThrowableAssertAlternative;
 import org.junit.jupiter.api.BeforeAll;
@@ -171,6 +173,13 @@ class BindingTest {
                         + " endpoints=[Endpoint[path=/items, methods=[GET, POST], auth=null],"
                         + " Endpoint[path=/items/{id}, methods=[GET, PUT, DELETE], auth=false]],"
                         + " maintenance=Maintenance[window=03:00, cron=0 3 * * SUN], weights={b=2, a=1}, extra=null]");
+    }
+
+    @Test
+    void bindsFile(@TempDir Path directory) throws IOException {
+        var file = Files.writeString(directory.resolve("config.toml"), MINIMAL);
+
+        assertThat(Toml.parse(file, appConfig)).isEqualTo(Toml.parse(MINIMAL, appConfig));
     }
 
     @Test

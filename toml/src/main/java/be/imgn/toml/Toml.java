@@ -19,8 +19,8 @@ import java.nio.file.Path;
  * Parses and writes <a href="https://toml.io/en/v1.1.0">TOML 1.1</a> documents.
  *
  * <pre>{@code
- * TomlTable config = Toml.parse(CharSource.of(file, StandardCharsets.UTF_8));
- * long port = config.getLong("server.port");
+ * TomlTable config = Toml.parse(file);
+ * int port = config.getInt("server.port");
  *
  * Toml.write(config, CharSink.of(file, StandardCharsets.UTF_8));
  * }</pre>
@@ -78,6 +78,20 @@ public final class Toml {
     public static TomlTable parse(ByteSource source) throws IOException {
         requireNonNull(source, "source");
         return parse(decode(source.read()));
+    }
+
+    /**
+     * Parses a document read from a file, which must be UTF-8, as TOML requires.
+     *
+     * @param file the file of the document
+     * @return the root table of the document
+     * @throws IOException if reading {@code file} fails
+     * @throws TomlParseException if the document is not valid UTF-8, or not valid TOML
+     * @throws NullPointerException if {@code file} is null
+     */
+    public static TomlTable parse(Path file) throws IOException {
+        requireNonNull(file, "file");
+        return parse(ByteSource.of(file));
     }
 
     /**
@@ -141,6 +155,26 @@ public final class Toml {
         requireNonNull(type, "type");
         var binder = Binders.of(type);
         return type.cast(binder.bind(parse(source)));
+    }
+
+    /**
+     * Parses a document read from a file, which must be UTF-8, as TOML requires, and binds it to a {@link TomlConfig}
+     * record.
+     *
+     * @param <T> the type of the record
+     * @param file the file of the document
+     * @param type the type of the record
+     * @return the record
+     * @throws IOException if reading {@code file} fails
+     * @throws TomlParseException if the document is not valid UTF-8, or not valid TOML
+     * @throws TomlMappingException if the document does not bind to the record
+     * @throws IllegalArgumentException if no {@link TomlBinder} is registered for {@code type}
+     * @throws NullPointerException if an argument is null
+     */
+    public static <T> T parse(Path file, Class<T> type) throws IOException {
+        requireNonNull(file, "file");
+        requireNonNull(type, "type");
+        return parse(ByteSource.of(file), type);
     }
 
     /**

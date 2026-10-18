@@ -24,4 +24,8 @@ final class Nulls {
     static <E> List<E> nullList() {
         return Collections.<List<E>>singletonList(null).getFirst();
     }
+
+    static <T> Class<T> nullClass() {
+        return Collections.<Class<T>>singletonList(null).getFirst();
+    }
 }

@@ -2,6 +2,7 @@ package be.imgn.toml;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -25,5 +26,17 @@ public record TomlArray(List<TomlValue> values) implements TomlValue {
             index++;
         }
         values = List.copyOf(values);
+    }
+
+    /**
+     * Returns an array of values.
+     *
+     * @param values the values, in order; the array is copied
+     * @return an array of {@code values}
+     * @throws NullPointerException if {@code values} is null, or contains null
+     */
+    public static TomlArray of(TomlValue... values) {
+        requireNonNull(values, "values");
+        return new TomlArray(Arrays.asList(values));
     }
 }

@@ -1,6 +1,7 @@
 package be.imgn.toml;
 
 import static be.imgn.toml.Nulls.nullOf;
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -18,6 +19,7 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.time.LocalDate;
@@ -93,6 +95,28 @@ class TomlTest {
         var source = ByteSource.wrap("key = \"é\"".getBytes(UTF_8));
 
         assertThat(Toml.parse(source).getString("key")).isEqualTo("é");
+    }
+
+    @Test
+    void parsesUtf8File() throws IOException {
+        var file = Files.write(directory.resolve("config.toml"), "key = \"é\"".getBytes(UTF_8));
+
+        assertThat(Toml.parse(file).getString("key")).isEqualTo("é");
+    }
+
+    @Test
+    void rejectsFileThatIsNotUtf8() throws IOException {
+        var file = Files.write(directory.resolve("config.toml"), "key = \"é\"".getBytes(ISO_8859_1));
+
+        assertThatExceptionOfType(TomlParseException.class)
+                .isThrownBy(() -> Toml.parse(file))
+                .withMessage("line 1, column 8: invalid UTF-8");
+    }
+
+    @Test
+    void propagatesFailureToReadFile() {
+        assertThatExceptionOfType(NoSuchFileException.class)
+                .isThrownBy(() -> Toml.parse(directory.resolve("missing.toml")));
     }
 
     @Test
@@ -263,6 +287,15 @@ class TomlTest {
         assertThatNullPointerException()
                 .isThrownBy(() -> Toml.parse(nullOf(ByteSource.class)))
                 .withMessage("source");
+        assertThatNullPointerException()
+                .isThrownBy(() -> Toml.parse(nullOf(Path.class)))
+                .withMessage("file");
+        assertThatNullPointerException()
+                .isThrownBy(() -> Toml.parse(nullOf(Path.class), Object.class))
+                .withMessage("file");
+        assertThatNullPointerException()
+                .isThrownBy(() -> Toml.parse(file, Nulls.<Object>nullClass()))
+                .withMessage("type");
         assertThatNullPointerException()
                 .isThrownBy(() -> Toml.format(nullOf(TomlTable.class)))
                 .withMessage("table");

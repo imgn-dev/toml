@@ -25,20 +25,19 @@ The module is `be.imgn.toml`. To bind documents to records, see [Binding to reco
 ## Usage
 
 ```java
-TomlTable config = Toml.parse(CharSource.of(file, StandardCharsets.UTF_8));
+TomlTable config = Toml.parse(file);
 
 String host = config.getString("server.host");
-long port = config.getLong("server.port");
+int port = config.getInt("server.port");
 Optional<TomlValue> name = config.get("site.\"example.com\".name");
 
-TomlTable updated = TomlTable.builder()
-        .put("title", new TomlString("example"))
-        .put("server", config.getTable("server"))
+TomlTable updated = config.toBuilder()
+        .put("title", "example")
         .build();
 Toml.write(updated, CharSink.of(file, StandardCharsets.UTF_8));
 ```
 
-`Toml.parse` also takes a `String` or a `ByteSource` (UTF-8), and `Toml.format` writes a table to a `String`.
+`Toml.parse` also takes a `String`, a `CharSource` or a `ByteSource` (UTF-8), and `Toml.format` writes a table to a `String`.
 `Toml.writeAtomically(table, file)` replaces a file so that readers, or the next run after a crash, never see a
 half-written document.
 
@@ -85,7 +84,7 @@ record Server(String host, int port, @Nullable Duration timeout, LogLevel logLev
 record Endpoint(String path, Set<String> methods) {}
 enum LogLevel { DEBUG, INFO, READ_ONLY }
 
-AppConfig config = Toml.parse(CharSource.of(file, StandardCharsets.UTF_8), AppConfig.class);
+AppConfig config = Toml.parse(file, AppConfig.class);
 ```
 
 ```toml
