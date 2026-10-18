@@ -139,5 +139,5 @@ Maven plugin adds those `provides` clauses to the compiled `module-info.class`:
 
 [Apache License 2.0](LICENSE).
 
-`src/test/resources/toml-test` is a copy of the [toml-test](https://github.com/toml-lang/toml-test) suite, under
+`toml/src/test/resources/toml-test` is a copy of the [toml-test](https://github.com/toml-lang/toml-test) suite, under
 its own MIT license.
