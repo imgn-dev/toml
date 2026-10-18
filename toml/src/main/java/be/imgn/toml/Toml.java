@@ -81,6 +81,69 @@ public final class Toml {
     }
 
     /**
+     * Parses a document, and binds it to a {@link TomlConfig} record.
+     *
+     * @param <T> the type of the record
+     * @param document the document
+     * @param type the type of the record
+     * @return the record
+     * @throws TomlParseException if {@code document} is not valid TOML
+     * @throws TomlMappingException if the document does not bind to the record
+     * @throws IllegalArgumentException if no {@link TomlBinder} is registered for {@code type}
+     * @throws NullPointerException if an argument is null
+     * @since 0.1.0
+     */
+    public static <T> T parse(String document, Class<T> type) {
+        requireNonNull(document, "document");
+        requireNonNull(type, "type");
+        var binder = Binders.of(type);
+        return type.cast(binder.bind(parse(document)));
+    }
+
+    /**
+     * Parses a document read from a source of characters, and binds it to a {@link TomlConfig} record.
+     *
+     * @param <T> the type of the record
+     * @param source the source of the document
+     * @param type the type of the record
+     * @return the record
+     * @throws IOException if reading {@code source} fails
+     * @throws TomlParseException if the document is not valid TOML
+     * @throws TomlMappingException if the document does not bind to the record
+     * @throws IllegalArgumentException if no {@link TomlBinder} is registered for {@code type}
+     * @throws NullPointerException if an argument is null
+     * @since 0.1.0
+     */
+    public static <T> T parse(CharSource source, Class<T> type) throws IOException {
+        requireNonNull(source, "source");
+        requireNonNull(type, "type");
+        var binder = Binders.of(type);
+        return type.cast(binder.bind(parse(source)));
+    }
+
+    /**
+     * Parses a document read from a source of bytes, which must be UTF-8, as TOML requires, and binds it to a
+     * {@link TomlConfig} record.
+     *
+     * @param <T> the type of the record
+     * @param source the source of the document
+     * @param type the type of the record
+     * @return the record
+     * @throws IOException if reading {@code source} fails
+     * @throws TomlParseException if the document is not valid UTF-8, or not valid TOML
+     * @throws TomlMappingException if the document does not bind to the record
+     * @throws IllegalArgumentException if no {@link TomlBinder} is registered for {@code type}
+     * @throws NullPointerException if an argument is null
+     * @since 0.1.0
+     */
+    public static <T> T parse(ByteSource source, Class<T> type) throws IOException {
+        requireNonNull(source, "source");
+        requireNonNull(type, "type");
+        var binder = Binders.of(type);
+        return type.cast(binder.bind(parse(source)));
+    }
+
+    /**
      * Formats a table as a document.
      *
      * @param table the root table of the document

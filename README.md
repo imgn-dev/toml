@@ -8,6 +8,7 @@ A [TOML 1.1](https://toml.io/en/v1.1.0) parser and writer for Java 21+, with no 
 - Parses into immutable values: a sealed `TomlValue` hierarchy of records.
 - Reads from gaia's `CharSource` and `ByteSource`, and writes to its `CharSink` and `ByteSink`.
 - Reports errors with their line and column, and what was expected and found.
+- Binds documents to records, through code an annotation processor generates: no reflection.
 
 ## Coordinates
 
@@ -19,7 +20,7 @@ A [TOML 1.1](https://toml.io/en/v1.1.0) parser and writer for Java 21+, with no 
 </dependency>
 ```
 
-The module is `be.imgn.toml`.
+The module is `be.imgn.toml`. To bind documents to records, see [Binding to records](#binding-to-records).
 
 ## Usage
 
@@ -56,6 +57,77 @@ half-written document.
 
 The writer keeps the data, not the layout: comments and formatting are not kept, and a table's entries are written
 before its subtables. It writes only TOML 1.0 notation, so TOML 1.0 parsers can read its output too.
+
+## Binding to records
+
+Annotate the root record with `@TomlConfig`, and add the processor to the compiler:
+
+```xml
+<plugin>
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-compiler-plugin</artifactId>
+  <configuration>
+    <annotationProcessorPaths>
+      <path>
+        <groupId>be.imgn.toml</groupId>
+        <artifactId>toml-processor</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+      </path>
+    </annotationProcessorPaths>
+  </configuration>
+</plugin>
+```
+
+```java
+@TomlConfig
+record AppConfig(String title, Server server, List<Endpoint> endpoints) {}
+record Server(String host, int port, @Nullable Duration timeout, LogLevel logLevel) {}
+record Endpoint(String path, Set<String> methods) {}
+enum LogLevel { DEBUG, INFO, READ_ONLY }
+
+AppConfig config = Toml.parse(CharSource.of(file, StandardCharsets.UTF_8), AppConfig.class);
+```
+
+```toml
+title = "Inventory"
+
+[server]
+host = "0.0.0.0"
+port = 8080
+log-level = "info"   # timeout is @Nullable, so it may be left out
+
+[[endpoints]]
+path = "/items"
+methods = ["GET", "POST"]
+```
+
+- Keys are the component names in kebab case (`logLevel` is `log-level`), and enum constants too (`READ_ONLY` is
+  `"read-only"`); `@TomlKey` gives another one.
+- A missing key is an error unless the component is `@Nullable`; a key no component takes is an error too.
+- Binds strings, integers (range-checked), floats (and integers a float represents exactly), booleans, the four
+  date-times, enums, `Duration` (`"PT1M30S"` or `"1m30s"`), `Path`, `URI`, `List`, `Set`, `Map<String, T>`, records,
+  and `TomlValue`s as they are. See `@TomlConfig` for the details.
+- A value that does not bind throws a `TomlMappingException` with its path, such as
+  `endpoints[0].methods[1]: expected a string, found an integer`. An unsupported type is a compile error.
+
+The processor registers each generated binder in `META-INF/services`, which is enough on the class path. On the module
+path, the module must also provide `be.imgn.toml.TomlBinder` with each binder, which a processor cannot declare. gaia's
+Maven plugin adds those `provides` clauses to the compiled `module-info.class`:
+
+```xml
+<plugin>
+  <groupId>be.imgn.gaia</groupId>
+  <artifactId>gaia-maven-plugin</artifactId>
+  <version>0.1.2-SNAPSHOT</version>
+  <executions>
+    <execution>
+      <goals>
+        <goal>register-services</goal>
+      </goals>
+    </execution>
+  </executions>
+</plugin>
+```
 
 ## Building
 

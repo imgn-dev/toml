@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>be.imgn.toml</groupId>
+    <artifactId>toml-parent</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>toml-processor</artifactId>
+
+  <name>TOML processor</name>
+  <description>An annotation processor that generates the code binding TOML documents to records.</description>
+
+  <dependencies>
+    <dependency>
+      <groupId>be.imgn.gaia</groupId>
+      <artifactId>gaia-core</artifactId>
+      <version>${gaia.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>be.imgn.gaia</groupId>
+      <artifactId>gaia-processing</artifactId>
+      <version>${gaia.version}</version>
+    </dependency>
+    <!-- Also reaches the build through gaia-processing, but this module's own
+         package-info files use it, so it is declared. -->
+    <dependency>
+      <groupId>org.jspecify</groupId>
+      <artifactId>jspecify</artifactId>
+    </dependency>
+
+    <!-- The generated code is compiled and run against the runtime module. -->
+    <dependency>
+      <groupId>be.imgn.toml</groupId>
+      <artifactId>toml</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>be.imgn.gaia</groupId>
+      <artifactId>gaia-processing-testing</artifactId>
+      <version>${gaia.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+</project>

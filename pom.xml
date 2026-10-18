@@ -16,11 +16,12 @@
   </parent>
 
   <groupId>be.imgn.toml</groupId>
-  <artifactId>toml</artifactId>
+  <artifactId>toml-parent</artifactId>
   <version>0.1.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
 
-  <name>TOML</name>
-  <description>A TOML 1.1 parser and writer.</description>
+  <name>TOML parent</name>
+  <description>Build configuration shared by the TOML modules.</description>
   <!-- The parent's url and scm do not append child paths, so without these
        they would point at imgn-parent. -->
   <url>https://github.com/imgn-dev/toml</url>
@@ -34,36 +35,17 @@
     <tag>HEAD</tag>
   </scm>
 
+  <modules>
+    <module>toml</module>
+    <module>toml-processor</module>
+  </modules>
+
   <properties>
     <!-- The baseline the library runs on. The parent wires this into the
          compiler's and javadoc's release and into requireJavaVersion. -->
     <java.release>21</java.release>
 
-    <gaia.version>0.1.1-SNAPSHOT</gaia.version>
+    <gaia.version>0.1.2-SNAPSHOT</gaia.version>
   </properties>
-
-  <dependencies>
-    <dependency>
-      <groupId>be.imgn.gaia</groupId>
-      <artifactId>gaia-core</artifactId>
-      <version>${gaia.version}</version>
-    </dependency>
-    <!-- Also reaches the build through gaia-core, but this module's own
-         package-info files use it, so it is declared. -->
-    <dependency>
-      <groupId>org.jspecify</groupId>
-      <artifactId>jspecify</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.assertj</groupId>
-      <artifactId>assertj-core</artifactId>
-      <scope>test</scope>
-    </dependency>
-  </dependencies>
 
 </project>

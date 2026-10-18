@@ -1,0 +1,358 @@
+package be.imgn.toml;
+
+import static be.imgn.toml.Nulls.nullOf;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.entry;
+
+import java.net.URI;
+import java.nio.file.Path;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.Collections;
+import java.util.List;
+import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
+import org.assertj.core.api.ThrowableAssertAlternative;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+
+class TomlBindingsTest {
+
+    private static final TomlTable SERVER = Toml.parse("""
+            host = "example.com"
+            port = 8080
+            "a.b" = true
+            """);
+
+    @Test
+    void checksTableKeys() {
+        assertThat(TomlBindings.table(SERVER, "server", "host", "port", "a.b", "other"))
+                .isSameAs(SERVER);
+    }
+
+    @Test
+    void rejectsUnknownKey() {
+        assertThatMappingException(() -> TomlBindings.table(SERVER, "server", "host", "a.b"))
+                .withMessage("server: unknown key port")
+                .satisfies(e -> assertThat(e.path()).isEqualTo("server"));
+        assertThatMappingException(() -> TomlBindings.table(SERVER, "", "port"))
+                .withMessage("unknown keys host, \"a.b\"")
+                .satisfies(e -> assertThat(e.path()).isEmpty());
+    }
+
+    @Test
+    void rejectsValueThatIsNotTable() {
+        assertThatMappingException(() -> TomlBindings.table(new TomlInteger(1), "server"))
+                .withMessage("server: expected a table, found an integer");
+    }
+
+    @Test
+    void convertsRequiredValue() {
+        assertThat(TomlBindings.required(SERVER, "server", "port", TomlBindings::asInt))
+                .isEqualTo(8080);
+    }
+
+    @Test
+    void convertsValueAtItsPath() {
+        assertThatMappingException(() -> TomlBindings.required(SERVER, "server", "port", TomlBindings::asString))
+                .withMessage("server.port: expected a string, found an integer")
+                .satisfies(e -> assertThat(e.path()).isEqualTo("server.port"));
+        assertThatMappingException(() -> TomlBindings.required(SERVER, "", "a.b", TomlBindings::asString))
+                .withMessage("\"a.b\": expected a string, found a boolean");
+    }
+
+    @Test
+    void rejectsMissingRequiredValue() {
+        assertThatMappingException(() -> TomlBindings.required(SERVER, "server", "timeout", TomlBindings::asString))
+                .withMessage("server.timeout: missing");
+    }
+
+    @Test
+    void convertsOptionalValue() {
+        assertThat(TomlBindings.optional(SERVER, "server", "host", TomlBindings::asString))
+                .isEqualTo("example.com");
+        assertThat(TomlBindings.optional(SERVER, "server", "timeout", TomlBindings::asString))
+                .isNull();
+        assertThatMappingException(() -> TomlBindings.optional(SERVER, "server", "host", TomlBindings::asLong))
+                .withMessage("server.host: expected an integer, found a string");
+    }
+
+    @Test
+    void convertsString() {
+        assertThat(TomlBindings.asString(new TomlString("text"), "x")).isEqualTo("text");
+        assertThatMappingException(() -> TomlBindings.asString(new TomlBoolean(true), "x"))
+                .withMessage("x: expected a string, found a boolean");
+    }
+
+    @Test
+    void convertsIntegersInRange() {
+        assertThat(TomlBindings.asLong(new TomlInteger(Long.MIN_VALUE), "x")).isEqualTo(Long.MIN_VALUE);
+        assertThat(TomlBindings.asInt(new TomlInteger(Integer.MAX_VALUE), "x")).isEqualTo(Integer.MAX_VALUE);
+        assertThat(TomlBindings.asShort(new TomlInteger(Short.MIN_VALUE), "x")).isEqualTo(Short.MIN_VALUE);
+        assertThat(TomlBindings.asByte(new TomlInteger(Byte.MAX_VALUE), "x")).isEqualTo(Byte.MAX_VALUE);
+    }
+
+    @Test
+    void rejectsIntegersOutOfRange() {
+        assertThatMappingException(() -> TomlBindings.asInt(new TomlInteger(Integer.MAX_VALUE + 1L), "x"))
+                .withMessage("x: expected an integer from -2147483648 to 2147483647, found 2147483648");
+        assertThatMappingException(() -> TomlBindings.asShort(new TomlInteger(Short.MIN_VALUE - 1), "x"))
+                .withMessage("x: expected an integer from -32768 to 32767, found -32769");
+        assertThatMappingException(() -> TomlBindings.asByte(new TomlInteger(128), "x"))
+                .withMessage("x: expected an integer from -128 to 127, found 128");
+        assertThatMappingException(() -> TomlBindings.asLong(new TomlFloat(1), "x"))
+                .withMessage("x: expected an integer, found a float");
+    }
+
+    @Test
+    void convertsDouble() {
+        assertThat(TomlBindings.asDouble(new TomlFloat(2.5), "x")).isEqualTo(2.5);
+        assertThat(TomlBindings.asDouble(new TomlFloat(Double.NaN), "x")).isNaN();
+        assertThat(TomlBindings.asDouble(new TomlInteger(1L << 53), "x")).isEqualTo(0x1p53);
+        assertThat(TomlBindings.asDouble(new TomlInteger(Long.MIN_VALUE), "x")).isEqualTo(-0x1p63);
+    }
+
+    @Test
+    void rejectsIntegerWithoutExactDouble() {
+        assertThatMappingException(() -> TomlBindings.asDouble(new TomlInteger((1L << 53) + 1), "x"))
+                .withMessage("x: the integer 9007199254740993 has no exact double value");
+        assertThatMappingException(() -> TomlBindings.asDouble(new TomlInteger(Long.MAX_VALUE), "x"))
+                .withMessage("x: the integer 9223372036854775807 has no exact double value");
+        assertThatMappingException(() -> TomlBindings.asDouble(new TomlString("1"), "x"))
+                .withMessage("x: expected a float, found a string");
+    }
+
+    @Test
+    void convertsFloat() {
+        assertThat(TomlBindings.asFloat(new TomlFloat(0.1), "x")).isEqualTo(0.1f);
+        assertThat(TomlBindings.asFloat(new TomlFloat(Double.NEGATIVE_INFINITY), "x"))
+                .isEqualTo(Float.NEGATIVE_INFINITY);
+        assertThat(TomlBindings.asFloat(new TomlInteger(1 << 24), "x")).isEqualTo(0x1p24f);
+    }
+
+    @Test
+    void rejectsFloatOutOfRange() {
+        assertThatMappingException(() -> TomlBindings.asFloat(new TomlFloat(1e39), "x"))
+                .withMessage("x: the float 1.0E39 is out of the range of float");
+        assertThatMappingException(() -> TomlBindings.asFloat(new TomlInteger((1 << 24) + 1), "x"))
+                .withMessage("x: the integer 16777217 has no exact float value");
+        assertThatMappingException(() -> TomlBindings.asFloat(new TomlInteger(Long.MAX_VALUE), "x"))
+                .withMessage("x: the integer 9223372036854775807 has no exact float value");
+    }
+
+    @Test
+    void convertsBooleanAndDateTimes() {
+        var offsetDateTime = OffsetDateTime.of(1979, 5, 27, 7, 32, 0, 0, ZoneOffset.UTC);
+        var localDateTime = LocalDateTime.of(1979, 5, 27, 7, 32);
+        var localDate = LocalDate.of(1979, 5, 27);
+        var localTime = LocalTime.of(7, 32);
+        assertThat(TomlBindings.asBoolean(new TomlBoolean(true), "x")).isTrue();
+        assertThat(TomlBindings.asOffsetDateTime(new TomlOffsetDateTime(offsetDateTime), "x"))
+                .isEqualTo(offsetDateTime);
+        assertThat(TomlBindings.asLocalDateTime(new TomlLocalDateTime(localDateTime), "x"))
+                .isEqualTo(localDateTime);
+        assertThat(TomlBindings.asLocalDate(new TomlLocalDate(localDate), "x")).isEqualTo(localDate);
+        assertThat(TomlBindings.asLocalTime(new TomlLocalTime(localTime), "x")).isEqualTo(localTime);
+    }
+
+    @Test
+    void rejectsOtherKindOfDateTime() {
+        var localDate = new TomlLocalDate(LocalDate.of(1979, 5, 27));
+        assertThatMappingException(() -> TomlBindings.asBoolean(localDate, "x"))
+                .withMessage("x: expected a boolean, found a local date");
+        assertThatMappingException(() -> TomlBindings.asOffsetDateTime(localDate, "x"))
+                .withMessage("x: expected an offset date-time, found a local date");
+        assertThatMappingException(() -> TomlBindings.asLocalDateTime(localDate, "x"))
+                .withMessage("x: expected a local date-time, found a local date");
+        assertThatMappingException(() -> TomlBindings.asLocalTime(localDate, "x"))
+                .withMessage("x: expected a local time, found a local date");
+        assertThatMappingException(() -> TomlBindings.asLocalDate(new TomlLocalTime(LocalTime.NOON), "x"))
+                .withMessage("x: expected a local date, found a local time");
+    }
+
+    @Test
+    void convertsIsoDuration() {
+        assertThat(duration("PT1M30S")).isEqualTo(Duration.ofSeconds(90));
+        assertThat(duration("-P2DT3H")).isEqualTo(Duration.ofHours(-51));
+        assertThat(duration("+PT0.5S")).isEqualTo(Duration.ofMillis(500));
+    }
+
+    @Test
+    void convertsDurationAmounts() {
+        assertThat(duration("1h30m")).isEqualTo(Duration.ofMinutes(90));
+        assertThat(duration("2.5s")).isEqualTo(Duration.ofMillis(2500));
+        assertThat(duration("-500ms")).isEqualTo(Duration.ofMillis(-500));
+        assertThat(duration("1d2h3m4s5ms6us7ns"))
+                .isEqualTo(Duration.ofDays(1)
+                        .plusHours(2)
+                        .plusMinutes(3)
+                        .plusSeconds(4)
+                        .plusNanos(5_006_007));
+        assertThat(duration("0.000000001s")).isEqualTo(Duration.ofNanos(1));
+        assertThat(duration("-1.5us")).isEqualTo(Duration.ofNanos(-1500));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"", "-", "10", "1x", "30m1h", "1h1h", "1.5ns", "1.s", ".5s", "1 h", "1h ", "PT", "pt1s"})
+    void rejectsInvalidDuration(String string) {
+        assertThatMappingException(() -> TomlBindings.asDuration(new TomlString(string), "x"))
+                .withMessage(
+                        "x: expected a duration, as \"PT1M30S\" or \"1m30s\", found " + Emitter.formatString(string));
+    }
+
+    @Test
+    void rejectsDurationOutOfRange() {
+        assertThatMappingException(() -> TomlBindings.asDuration(new TomlString("999999999999999d"), "x"))
+                .withMessage("x: expected a duration, as \"PT1M30S\" or \"1m30s\", found \"999999999999999d\"");
+        assertThatMappingException(() -> TomlBindings.asDuration(new TomlInteger(10), "x"))
+                .withMessage("x: expected a string, found an integer");
+    }
+
+    @Test
+    void convertsPath() {
+        assertThat(TomlBindings.asPath(new TomlString("dir/file.txt"), "x")).isEqualTo(Path.of("dir", "file.txt"));
+        assertThatMappingException(() -> TomlBindings.asPath(new TomlString("a\0b"), "x"))
+                .withMessageStartingWith("x: invalid path \"a\\u0000b\": ");
+    }
+
+    @Test
+    void convertsUri() {
+        assertThat(TomlBindings.asUri(new TomlString("https://example.com/a?b"), "x"))
+                .isEqualTo(URI.create("https://example.com/a?b"));
+        assertThatMappingException(() -> TomlBindings.asUri(new TomlString("https://exa mple.com"), "x"))
+                .withMessage("x: invalid URI \"https://exa mple.com\": Illegal character in authority");
+    }
+
+    @Test
+    void checksTomlValueType() {
+        var array = new TomlArray(List.of());
+        assertThat(TomlBindings.as(TomlArray.class).convert(array, "x")).isSameAs(array);
+        assertThat(TomlBindings.as(TomlValue.class).convert(array, "x")).isSameAs(array);
+        assertThatMappingException(() -> TomlBindings.as(TomlTable.class).convert(array, "x"))
+                .withMessage("x: expected a table, found an array");
+    }
+
+    @Test
+    void convertsList() {
+        var list = TomlBindings.list(TomlBindings::asInt).convert(array(3, 1, 2), "x");
+        assertThat(list).containsExactly(3, 1, 2);
+        assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> list.add(4));
+        assertThatMappingException(
+                        () -> TomlBindings.list(TomlBindings::asString).convert(array(1), "x"))
+                .withMessage("x[0]: expected a string, found an integer");
+        assertThatMappingException(() -> TomlBindings.list(TomlBindings::asInt).convert(new TomlInteger(1), "x"))
+                .withMessage("x: expected an array, found an integer");
+    }
+
+    @Test
+    void convertsSet() {
+        var set = TomlBindings.set(TomlBindings::asInt).convert(array(3, 1, 2), "x");
+        assertThat(set).containsExactly(3, 1, 2);
+        assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> set.add(4));
+        assertThatMappingException(() -> TomlBindings.set(TomlBindings::asInt).convert(array(1, 2, 1), "x"))
+                .withMessage("x[2]: duplicate element");
+    }
+
+    @Test
+    void convertsMap() {
+        var map = TomlBindings.map(TomlBindings::asInt).convert(Toml.parse("b = 1\na = 2"), "x");
+        assertThat(map).containsExactly(entry("b", 1), entry("a", 2));
+        assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> map.put("c", 3));
+        assertThatMappingException(() -> TomlBindings.map(TomlBindings::asInt).convert(SERVER, "x"))
+                .withMessage("x.host: expected an integer, found a string");
+        assertThatMappingException(() -> TomlBindings.map(TomlBindings::asInt).convert(array(), "x"))
+                .withMessage("x: expected a table, found an array");
+    }
+
+    @Test
+    void nestsPaths() {
+        var document = Toml.parse("servers = [{ ports = [80, \"443\"] }]");
+        assertThatMappingException(() -> TomlBindings.required(
+                        document,
+                        "",
+                        "servers",
+                        TomlBindings.list((value, path) -> TomlBindings.required(
+                                TomlBindings.table(value, path, "ports"),
+                                path,
+                                "ports",
+                                TomlBindings.list(TomlBindings::asInt)))))
+                .withMessage("servers[0].ports[1]: expected an integer, found a string")
+                .satisfies(e -> assertThat(e.path()).isEqualTo("servers[0].ports[1]"));
+    }
+
+    @Test
+    void reportsRejectedRecord() {
+        var cause = new IllegalArgumentException("port must be positive");
+        assertThat(TomlBindings.rejected("server", cause))
+                .hasMessage("server: port must be positive")
+                .hasCause(cause);
+        assertThat(TomlBindings.rejected("", new IllegalStateException()))
+                .hasMessage("java.lang.IllegalStateException");
+    }
+
+    @Test
+    void reportsUnknownEnumString() {
+        assertThat(TomlBindings.notOneOf(new TomlString("trace"), "level", "debug", "info"))
+                .hasMessage("level: expected one of \"debug\", \"info\", found \"trace\"");
+        assertThatMappingException(() -> TomlBindings.notOneOf(new TomlInteger(1), "level", "debug"))
+                .withMessage("level: expected a string, found an integer");
+    }
+
+    @Test
+    void rejectsNulls() {
+        assertThatNullPointerException()
+                .isThrownBy(() -> TomlBindings.asString(nullOf(TomlValue.class), "x"))
+                .withMessage("value");
+        assertThatNullPointerException()
+                .isThrownBy(() -> TomlBindings.asString(new TomlString(""), nullOf(String.class)))
+                .withMessage("path");
+        assertThatNullPointerException()
+                .isThrownBy(() -> TomlBindings.required(SERVER, "", "port", TomlBindingsTest.<String>nullConverter()))
+                .withMessage("converter");
+        assertThatNullPointerException()
+                .isThrownBy(() -> TomlBindings.list(TomlBindingsTest.<String>nullConverter()))
+                .withMessage("element");
+    }
+
+    @Test
+    void rejectsDuplicateTableKeys() {
+        assertThatIllegalArgumentException().isThrownBy(() -> TomlBindings.table(SERVER, "", "port", "port"));
+    }
+
+    @Test
+    void rejectsRecordWithoutBinder() {
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> Toml.parse("", Unbound.class))
+                .withMessageStartingWith("no TomlBinder is registered for be.imgn.toml.TomlBindingsTest$Unbound: ");
+    }
+
+    private static <T> TomlBindings.Converter<T> nullConverter() {
+        return Collections.<TomlBindings.Converter<T>>singletonList(null).getFirst();
+    }
+
+    private static Duration duration(String string) {
+        return TomlBindings.asDuration(new TomlString(string), "x");
+    }
+
+    private static TomlArray array(Object... values) {
+        return new TomlArray(List.of(values).stream()
+                .<TomlValue>map(value -> value instanceof Integer integer
+                        ? new TomlInteger(integer)
+                        : new TomlString(String.valueOf(value)))
+                .toList());
+    }
+
+    private static ThrowableAssertAlternative<TomlMappingException> assertThatMappingException(
+            ThrowingCallable callable) {
+        return assertThatExceptionOfType(TomlMappingException.class).isThrownBy(callable);
+    }
+
+    private record Unbound(String name) {}
+}

@@ -47,6 +47,28 @@ final class Emitter {
         return out.toString();
     }
 
+    /** Returns a key as a document writes it: bare if it can be, quoted otherwise. */
+    static String formatKey(String key) {
+        var out = new StringBuilder();
+        try {
+            new Emitter(out).key(key);
+        } catch (IOException e) {
+            throw new AssertionError("a StringBuilder does not throw IOException", e);
+        }
+        return out.toString();
+    }
+
+    /** Returns a string as a document writes it, quoted. */
+    static String formatString(String string) {
+        var out = new StringBuilder();
+        try {
+            new Emitter(out).string(string);
+        } catch (IOException e) {
+            throw new AssertionError("a StringBuilder does not throw IOException", e);
+        }
+        return out.toString();
+    }
+
     private void body(List<String> path, TomlTable table) throws IOException {
         for (var entry : table.entries().entrySet()) {
             if (!isSection(entry.getValue())) {
