@@ -9,6 +9,7 @@ module be.imgn.toml {
     requires transitive be.imgn.gaia.core;
 
     exports be.imgn.toml;
+    exports be.imgn.toml.i18n;
 
     // Toml.parse(..., Class) loads the binders that the annotation processor generates.
     uses TomlBinder;
