@@ -289,6 +289,7 @@ final class Parser {
     // Numbers
 
     private TomlValue number() {
+        var start = in.here();
         var negative = in.isAt('-');
         var signed = in.match('-') || in.match('+');
         if (in.isAt('i') || in.isAt('n')) {
@@ -299,11 +300,11 @@ final class Parser {
         }
         if (in.isAt('0') && (in.isAt(1, 'x') || in.isAt(1, 'o') || in.isAt(1, 'b'))) {
             if (signed) {
-                throw in.error("a hexadecimal, octal or binary integer cannot have a sign");
+                throw Cursor.error(start, "a hexadecimal, octal or binary integer cannot have a sign");
             }
-            return radixInteger();
+            return radixInteger(start);
         }
-        return decimal(negative);
+        return decimal(negative, start);
     }
 
     private TomlValue infinityOrNan(boolean negative) {
@@ -315,7 +316,7 @@ final class Parser {
         return new TomlFloat(Double.NaN);
     }
 
-    private TomlValue radixInteger() {
+    private TomlValue radixInteger(long start) {
         in.advance();
         var prefix = in.advance();
         var radix = switch (prefix) {
@@ -327,14 +328,14 @@ final class Parser {
         try {
             return new TomlInteger(Long.parseLong(digits, radix));
         } catch (NumberFormatException e) {
-            throw in.error("the integer 0" + prefix + digits + " does not fit in 64 bits", e);
+            throw Cursor.error(start, "the integer 0" + prefix + digits + " does not fit in 64 bits", e);
         }
     }
 
-    private TomlValue decimal(boolean negative) {
+    private TomlValue decimal(boolean negative, long start) {
         var integerPart = digits(DECIMAL_RADIX, "a digit");
         if (integerPart.length() > 1 && integerPart.charAt(0) == '0') {
-            throw in.error("a number cannot have leading zeros");
+            throw Cursor.error(start, "a number cannot have leading zeros");
         }
         var number = new StringBuilder(negative ? "-" : "").append(integerPart);
         var isFloat = false;
@@ -356,7 +357,7 @@ final class Parser {
         try {
             return new TomlInteger(Long.parseLong(number.toString()));
         } catch (NumberFormatException e) {
-            throw in.error("the integer " + number + " does not fit in 64 bits", e);
+            throw Cursor.error(start, "the integer " + number + " does not fit in 64 bits", e);
         }
     }
 
@@ -383,6 +384,7 @@ final class Parser {
     // Dates and times
 
     private TomlValue dateTime() {
+        var start = in.here();
         try {
             var date = LocalDate.of(fixedDigits(YEAR_DIGITS, "the year"), dashed("the month"), dashed("the day"));
             if (!(in.isAt('T') || in.isAt('t') || (in.isAt(' ') && in.isDigitAt(1)))) {
@@ -395,15 +397,16 @@ final class Parser {
             }
             return new TomlOffsetDateTime(OffsetDateTime.of(dateTime, offset()));
         } catch (DateTimeException e) {
-            throw in.error("invalid date-time: " + e.getMessage(), e);
+            throw Cursor.error(start, "invalid date-time: " + e.getMessage(), e);
         }
     }
 
     private TomlValue localTime() {
+        var start = in.here();
         try {
             return new TomlLocalTime(time());
         } catch (DateTimeException e) {
-            throw in.error("invalid time: " + e.getMessage(), e);
+            throw Cursor.error(start, "invalid time: " + e.getMessage(), e);
         }
     }
 

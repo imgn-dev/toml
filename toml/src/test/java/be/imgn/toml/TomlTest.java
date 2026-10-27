@@ -146,7 +146,7 @@ class TomlTest {
     void describesWhatWasFound() {
         assertParseError("x = ", "line 1, column 5: expected a value but found end of input");
         assertParseError("%bad = 1", "line 1, column 1: expected a key but found '%'");
-        assertParseError("x = 0123", "line 1, column 9: a number cannot have leading zeros");
+        assertParseError("x = 0123", "line 1, column 5: a number cannot have leading zeros");
         assertParseError("x = \"a\u0001\"", "line 1, column 7: the control character U+0001 is not allowed here");
         assertParseError("x = 1\ry = 2", "line 1, column 7: a carriage return must be followed by a line feed");
         assertParseError("x = 1 y = 2", "line 1, column 7: expected a newline after the statement but found 'y'");
@@ -166,6 +166,22 @@ class TomlTest {
     }
 
     @Test
+    void positionsValueErrorsAtTheValue() {
+        assertParseError(
+                "x = 99999999999999999999",
+                "line 1, column 5: the integer 99999999999999999999 does not fit in 64 bits");
+        assertParseError(
+                "x = 0x1_0000_0000_0000_0000",
+                "line 1, column 5: the integer 0x10000000000000000 does not fit in 64 bits");
+        assertParseError("x = [1, 0123]", "line 1, column 9: a number cannot have leading zeros");
+        assertParseError("x = +0x1", "line 1, column 5: a hexadecimal, octal or binary integer cannot have a sign");
+        assertParseErrorAt("d = 2026-02-30", new TomlPosition(1, 5));
+        assertParseErrorAt("d = 2026-02-01T25:00:00", new TomlPosition(1, 5));
+        assertParseErrorAt("d = 2026-02-01T00:00:00+19:00", new TomlPosition(1, 5));
+        assertParseErrorAt("t = 24:00:00", new TomlPosition(1, 5));
+    }
+
+    @Test
     void rejectsNonAsciiDigits() {
         // U+0661 and U+FF11 are digits for Character.digit, but not for TOML.
         assertParseError("x = 0x\u0661", "line 1, column 7: expected a digit in base 16 but found '\u0661'");
@@ -177,7 +193,7 @@ class TomlTest {
     void wrapsTheCauseOfAnInvalidValue() {
         assertThatExceptionOfType(TomlParseException.class)
                 .isThrownBy(() -> Toml.parse("x = 9223372036854775808"))
-                .withMessage("line 1, column 24: the integer 9223372036854775808 does not fit in 64 bits")
+                .withMessage("line 1, column 5: the integer 9223372036854775808 does not fit in 64 bits")
                 .withCauseInstanceOf(NumberFormatException.class);
     }
 
@@ -328,5 +344,11 @@ class TomlTest {
         assertThatExceptionOfType(TomlParseException.class)
                 .isThrownBy(() -> Toml.parse(document))
                 .withMessage(message);
+    }
+
+    private static void assertParseErrorAt(String document, TomlPosition position) {
+        assertThatExceptionOfType(TomlParseException.class)
+                .isThrownBy(() -> Toml.parse(document))
+                .satisfies(e -> assertThat(e.position()).isEqualTo(position));
     }
 }

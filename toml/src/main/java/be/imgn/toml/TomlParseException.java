@@ -31,6 +31,12 @@ public final class TomlParseException extends RuntimeException {
     /**
      * Returns where the error is.
      *
+     * <p>An error about a whole value, such as an integer that does not fit in 64 bits or an invalid date, is where the
+     * value starts. An error about the definition of a table, such as a table defined twice, is at the {@code [} of its
+     * header. An error about a key, such as a duplicate key, is at that key, or at the part of a dotted key it is
+     * about, inside a header too. These are the positions {@link TomlPositions} reports. Any other error is where the
+     * parser found it.
+     *
      * @return the position of the error
      */
     public TomlPosition position() {

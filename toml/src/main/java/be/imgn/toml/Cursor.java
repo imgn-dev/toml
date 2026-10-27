@@ -106,6 +106,11 @@ final class Cursor {
         return new TomlParseException(message, at.line(), at.column());
     }
 
+    static TomlParseException error(long position, String message, Throwable cause) {
+        var at = TomlPositions.unpack(position);
+        return new TomlParseException(message, at.line(), at.column(), cause);
+    }
+
     /** An error that states what the grammar wanted and what is actually there. */
     TomlParseException expected(String description) {
         return error("expected " + description + " but found " + (atEnd() ? "end of input" : describe(peek())));
