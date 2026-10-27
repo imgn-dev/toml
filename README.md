@@ -88,6 +88,11 @@ Annotate the root record with `@TomlConfig`, and add the processor to the compil
 </plugin>
 ```
 
+This works for modular projects too: the Maven Compiler Plugin 3.x passes these paths to `-processorpath`. The
+processor is also the named module `be.imgn.toml.processor`, which provides `javax.annotation.processing.Processor`. To
+run it from javac's `--processor-module-path`, that path needs `toml-processor`, `gaia-processing`, `gaia-core`,
+`jspecify` and `error_prone_annotations` (which `gaia-core` requires).
+
 ```java
 @TomlConfig
 record AppConfig(String title, Server server, List<Endpoint> endpoints) {}

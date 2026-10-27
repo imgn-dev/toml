@@ -100,6 +100,12 @@ final class Cursor {
         return new TomlParseException(message, line, column, cause);
     }
 
+    /** An error at a position read earlier, such as the key a semantic rule rejects. */
+    static TomlParseException error(long position, String message) {
+        var at = TomlPositions.unpack(position);
+        return new TomlParseException(message, at.line(), at.column());
+    }
+
     /** An error that states what the grammar wanted and what is actually there. */
     TomlParseException expected(String description) {
         return error("expected " + description + " but found " + (atEnd() ? "end of input" : describe(peek())));

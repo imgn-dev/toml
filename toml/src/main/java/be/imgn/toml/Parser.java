@@ -117,7 +117,7 @@ final class Parser {
                 case null -> table.add(key.name(), new TableNode(Kind.IMPLICIT, key.position(), key.position()));
                 case TableNode node -> node;
                 case ArrayOfTables array -> array.elements().getLast();
-                case Leaf leaf -> throw notATable(key.name(), leaf);
+                case Leaf leaf -> throw notATable(key, leaf);
             };
         }
         return table;
@@ -128,7 +128,7 @@ final class Parser {
             case null ->
                 parent.add(key.name(), new ArrayOfTables(new ArrayList<>(), new Positions(), key.position(), header));
             case ArrayOfTables existing -> existing;
-            default -> throw in.error("cannot define '" + key.name() + "' again as an array of tables");
+            default -> throw Cursor.error(header, "cannot define '" + key.name() + "' again as an array of tables");
         };
         var element = new TableNode(Kind.EXPLICIT);
         array.elements().add(element);
@@ -148,7 +148,7 @@ final class Parser {
             table.valuePosition = header;
             return table;
         }
-        throw in.error("the table '" + key.name() + "' is already defined");
+        throw Cursor.error(header, "the table '" + key.name() + "' is already defined");
     }
 
     private void keyValue(TableNode base) {
@@ -164,14 +164,16 @@ final class Parser {
             table = switch (existing) {
                 case null -> openDottedTable(table, key);
                 case TableNode node when node.kind != Kind.EXPLICIT && !node.closed -> node;
-                case TableNode node -> throw in.error("cannot extend the table '" + key.name() + "' with a dotted key");
-                case ArrayOfTables array -> throw notATable(key.name(), array);
-                case Leaf leaf -> throw notATable(key.name(), leaf);
+                case TableNode node ->
+                    throw Cursor.error(
+                            key.position(), "cannot extend the table '" + key.name() + "' with a dotted key");
+                case ArrayOfTables array -> throw notATable(key, array);
+                case Leaf leaf -> throw notATable(key, leaf);
             };
         }
         var last = keys.getLast();
         if (table.entries.containsKey(last.name())) {
-            throw in.error("duplicate key '" + last.name() + "'");
+            throw Cursor.error(last.position(), "duplicate key '" + last.name() + "'");
         }
         table.add(last.name(), new Leaf(value, last.position(), start, shape));
     }
@@ -182,10 +184,10 @@ final class Parser {
         return table;
     }
 
-    private TomlParseException notATable(String key, Node node) {
+    private static TomlParseException notATable(Key key, Node node) {
         return node instanceof Leaf leaf && leaf.value() instanceof TomlTable
-                ? in.error("cannot extend the inline table '" + key + "'")
-                : in.error("the key '" + key + "' is not a table");
+                ? Cursor.error(key.position(), "cannot extend the inline table '" + key.name() + "'")
+                : Cursor.error(key.position(), "the key '" + key.name() + "' is not a table");
     }
 
     private List<Key> keyPath() {

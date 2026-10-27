@@ -130,7 +130,7 @@ public final class TomlPositions {
         return (long) line << Integer.SIZE | column;
     }
 
-    private static TomlPosition unpack(long position) {
+    static TomlPosition unpack(long position) {
         return new TomlPosition((int) (position >>> Integer.SIZE), (int) position);
     }
 

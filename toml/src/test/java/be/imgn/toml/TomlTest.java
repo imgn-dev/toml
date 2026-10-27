@@ -150,8 +150,19 @@ class TomlTest {
         assertParseError("x = \"a\u0001\"", "line 1, column 7: the control character U+0001 is not allowed here");
         assertParseError("x = 1\ry = 2", "line 1, column 7: a carriage return must be followed by a line feed");
         assertParseError("x = 1 y = 2", "line 1, column 7: expected a newline after the statement but found 'y'");
-        assertParseError("a = 1\na = 2", "line 2, column 6: duplicate key 'a'");
-        assertParseError("[a]\n[a]", "line 2, column 4: the table 'a' is already defined");
+    }
+
+    @Test
+    void positionsSemanticErrorsAtTheKeyOrHeader() {
+        assertParseError("a = 1\na = 2", "line 2, column 1: duplicate key 'a'");
+        assertParseError("x = {a = 1, a = 2}", "line 1, column 13: duplicate key 'a'");
+        assertParseError("[a]\n[a]", "line 2, column 1: the table 'a' is already defined");
+        assertParseError("[[a]]\n [a]", "line 2, column 2: the table 'a' is already defined");
+        assertParseError("[a]\n[[a]]", "line 2, column 1: cannot define 'a' again as an array of tables");
+        assertParseError("a = 1\n[ a.b ]", "line 2, column 3: the key 'a' is not a table");
+        assertParseError("a = {b = 1}\na.c = 2", "line 2, column 1: cannot extend the inline table 'a'");
+        assertParseError(
+                "[a.b]\nc = 1\n[a]\nx = 1\nb.d = 1", "line 5, column 1: cannot extend the table 'b' with a dotted key");
     }
 
     @Test
