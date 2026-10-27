@@ -9,9 +9,11 @@ import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A recursive-descent TOML 1.1 parser.
@@ -19,6 +21,9 @@ import java.util.Map;
  * <p>The tables a document defines with headers and dotted keys are built as a mutable tree, which records how each
  * table was defined so that the rules against redefining a table can be enforced, and which becomes {@link TomlTable}s
  * at the end. Arrays and inline tables cannot be extended once closed, so they become values right away.
+ *
+ * <p>The tree also records where each key and value is written, and so do the shapes it keeps of the arrays and inline
+ * tables it reads: the tree and those shapes become the {@link TomlPositions} of the document.
  */
 final class Parser {
 
@@ -37,17 +42,20 @@ final class Parser {
     // An escape character's position in ESCAPES is its replacement's position in ESCAPED.
     private static final String ESCAPES = "\"\\btnfre";
     private static final String ESCAPED = "\"\\\b\t\n\f\r\u001B";
+    private static final int INITIAL_POSITIONS = 8;
 
     private final Cursor in;
     private final TableNode root = new TableNode(Kind.EXPLICIT);
     private final List<TableNode> openDottedTables = new ArrayList<>();
     private TableNode current = root;
+    // The shape of the array or inline table that value() last read, or null if it read another value.
+    private TomlPositions.@Nullable Shape valueShape;
 
     private Parser(String text) {
         in = new Cursor(text);
     }
 
-    static TomlTable parse(String document) {
+    static TomlDocument parse(String document) {
         var text = !document.isEmpty() && document.charAt(0) == BYTE_ORDER_MARK ? document.substring(1) : document;
         return new Parser(text).document();
     }
@@ -60,13 +68,13 @@ final class Parser {
             if (!parser.in.atEnd()) {
                 throw parser.in.expected("'.' or the end of the key");
             }
-            return keys;
+            return keys.stream().map(Key::name).toList();
         } catch (TomlParseException e) {
             throw illegalArgument(e, "invalid key %s: %s", key, e.getMessage());
         }
     }
 
-    private TomlTable document() {
+    private TomlDocument document() {
         skipBlank();
         while (!in.atEnd()) {
             if (in.isAt('[')) {
@@ -77,12 +85,14 @@ final class Parser {
             statementEnd();
             skipBlank();
         }
-        return freeze(root);
+        var table = freeze(root);
+        return new TomlDocument(table, new TomlPositions(table, root));
     }
 
     // Tables and keys
 
     private void header() {
+        var start = in.here();
         in.expect('[');
         var arrayOfTables = in.match('[');
         var keys = keyPath();
@@ -95,71 +105,79 @@ final class Parser {
         }
         openDottedTables.clear();
         var parent = parentOf(keys);
-        current = arrayOfTables ? appendTable(parent, keys.getLast()) : defineTable(parent, keys.getLast());
+        var last = keys.getLast();
+        current = arrayOfTables ? appendTable(parent, last, start) : defineTable(parent, last, start);
     }
 
-    private TableNode parentOf(List<String> keys) {
+    private TableNode parentOf(List<Key> keys) {
         var table = root;
         for (var key : keys.subList(0, keys.size() - 1)) {
-            var existing = table.entries.get(key);
+            var existing = table.entries.get(key.name());
             table = switch (existing) {
-                case null -> table.add(key, new TableNode(Kind.IMPLICIT));
+                case null -> table.add(key.name(), new TableNode(Kind.IMPLICIT, key.position(), key.position()));
                 case TableNode node -> node;
                 case ArrayOfTables array -> array.elements().getLast();
-                case Leaf leaf -> throw notATable(key, leaf);
+                case Leaf leaf -> throw notATable(key.name(), leaf);
             };
         }
         return table;
     }
 
-    private TableNode appendTable(TableNode parent, String key) {
-        var array = switch (parent.entries.get(key)) {
-            case null -> parent.add(key, new ArrayOfTables(new ArrayList<>()));
+    private TableNode appendTable(TableNode parent, Key key, long header) {
+        var array = switch (parent.entries.get(key.name())) {
+            case null ->
+                parent.add(key.name(), new ArrayOfTables(new ArrayList<>(), new Positions(), key.position(), header));
             case ArrayOfTables existing -> existing;
-            default -> throw in.error("cannot define '" + key + "' again as an array of tables");
+            default -> throw in.error("cannot define '" + key.name() + "' again as an array of tables");
         };
         var element = new TableNode(Kind.EXPLICIT);
         array.elements().add(element);
+        array.positions().add(header);
         return element;
     }
 
-    private TableNode defineTable(TableNode parent, String key) {
-        var existing = parent.entries.get(key);
+    private TableNode defineTable(TableNode parent, Key key, long header) {
+        var existing = parent.entries.get(key.name());
         if (existing == null) {
-            return parent.add(key, new TableNode(Kind.EXPLICIT));
+            return parent.add(key.name(), new TableNode(Kind.EXPLICIT, key.position(), header));
         }
         if (existing instanceof TableNode table && table.kind == Kind.IMPLICIT) {
             table.kind = Kind.EXPLICIT;
+            // The header defines the table, where it only appeared as a parent before.
+            table.keyPosition = key.position();
+            table.valuePosition = header;
             return table;
         }
-        throw in.error("the table '" + key + "' is already defined");
+        throw in.error("the table '" + key.name() + "' is already defined");
     }
 
     private void keyValue(TableNode base) {
         var keys = keyPath();
         in.expect('=');
         skipWhitespace();
+        var start = in.here();
         var value = value();
+        var shape = valueShape;
         var table = base;
         for (var key : keys.subList(0, keys.size() - 1)) {
-            var existing = table.entries.get(key);
+            var existing = table.entries.get(key.name());
             table = switch (existing) {
                 case null -> openDottedTable(table, key);
                 case TableNode node when node.kind != Kind.EXPLICIT && !node.closed -> node;
-                case TableNode node -> throw in.error("cannot extend the table '" + key + "' with a dotted key");
-                case ArrayOfTables array -> throw notATable(key, array);
-                case Leaf leaf -> throw notATable(key, leaf);
+                case TableNode node -> throw in.error("cannot extend the table '" + key.name() + "' with a dotted key");
+                case ArrayOfTables array -> throw notATable(key.name(), array);
+                case Leaf leaf -> throw notATable(key.name(), leaf);
             };
         }
         var last = keys.getLast();
-        if (table.entries.containsKey(last)) {
-            throw in.error("duplicate key '" + last + "'");
+        if (table.entries.containsKey(last.name())) {
+            throw in.error("duplicate key '" + last.name() + "'");
         }
-        table.add(last, new Leaf(value));
+        table.add(last.name(), new Leaf(value, last.position(), start, shape));
     }
 
-    private TableNode openDottedTable(TableNode parent, String key) {
-        var table = parent.add(key, new TableNode(Kind.DOTTED));
+    private TableNode openDottedTable(TableNode parent, Key key) {
+        var table = parent.add(key.name(), new TableNode(Kind.DOTTED, key.position(), key.position()));
         openDottedTables.add(table);
         return table;
     }
@@ -170,11 +188,12 @@ final class Parser {
                 : in.error("the key '" + key + "' is not a table");
     }
 
-    private List<String> keyPath() {
-        var keys = new ArrayList<String>();
+    private List<Key> keyPath() {
+        var keys = new ArrayList<Key>();
         do {
             skipWhitespace();
-            keys.add(key());
+            var position = in.here();
+            keys.add(new Key(key(), position));
             skipWhitespace();
         } while (in.match('.'));
         return keys;
@@ -204,6 +223,7 @@ final class Parser {
         if (in.atEnd()) {
             throw in.expected("a value");
         }
+        valueShape = null;
         return switch (in.peek()) {
             case '"', '\'' -> new TomlString(string(true));
             case '[' -> array();
@@ -232,15 +252,19 @@ final class Parser {
     private TomlValue array() {
         in.expect('[');
         var values = new ArrayList<TomlValue>();
+        var shape = new InlineArray();
         skipBlank();
         while (!in.match(']')) {
+            var position = in.here();
             values.add(value());
+            shape.add(position, valueShape);
             skipBlank();
             if (!in.match(',') && !in.isAt(']')) {
                 throw in.expected("',' or ']'");
             }
             skipBlank();
         }
+        valueShape = shape;
         return new TomlArray(values);
     }
 
@@ -256,6 +280,7 @@ final class Parser {
             }
             skipBlank();
         }
+        valueShape = table;
         return freeze(table);
     }
 
@@ -638,30 +663,133 @@ final class Parser {
         DOTTED
     }
 
-    /** A value of the tree of tables being built. */
-    private sealed interface Node permits TableNode, ArrayOfTables, Leaf {}
+    /** A value of the tree of tables being built, and where it and its key are written. */
+    private sealed interface Node extends TomlPositions.Spot permits TableNode, ArrayOfTables, Leaf {}
 
-    /** A table being built. */
-    private static final class TableNode implements Node {
+    /** A table being built, which is also the shape of the table it becomes. */
+    private static final class TableNode implements Node, TomlPositions.TableShape {
 
         private final Map<String, Node> entries = new LinkedHashMap<>();
         private Kind kind;
         // Set on a dotted table once a header follows: dotted keys can then no longer extend it.
         private boolean closed;
+        private long keyPosition;
+        private long valuePosition;
 
+        /** Creates a table that is not the value of a key: the root table, or an inline table. */
         TableNode(Kind kind) {
             this.kind = kind;
+        }
+
+        TableNode(Kind kind, long keyPosition, long valuePosition) {
+            this.kind = kind;
+            this.keyPosition = keyPosition;
+            this.valuePosition = valuePosition;
         }
 
         <T extends Node> T add(String key, T node) {
             entries.put(key, node);
             return node;
         }
+
+        @Override
+        public long keyPosition() {
+            return keyPosition;
+        }
+
+        @Override
+        public long valuePosition() {
+            return valuePosition;
+        }
+
+        @Override
+        public TableNode shape() {
+            return this;
+        }
+
+        @Override
+        public Map<String, Node> spots() {
+            return entries;
+        }
     }
 
-    /** An array of tables, defined by {@code [[header]]}s, being built. */
-    private record ArrayOfTables(List<TableNode> elements) implements Node {}
+    /**
+     * An array of tables, defined by {@code [[header]]}s, being built, with the positions of its headers. It is also
+     * the shape of the array it becomes.
+     */
+    private record ArrayOfTables(List<TableNode> elements, Positions positions, long keyPosition, long valuePosition)
+            implements Node, TomlPositions.ArrayShape {
 
-    /** A value that will not change anymore. */
-    private record Leaf(TomlValue value) implements Node {}
+        @Override
+        public ArrayOfTables shape() {
+            return this;
+        }
+
+        @Override
+        public int size() {
+            return elements.size();
+        }
+
+        @Override
+        public long position(int index) {
+            return positions.get(index);
+        }
+
+        @Override
+        public TableNode elementShape(int index) {
+            return elements.get(index);
+        }
+    }
+
+    /** A value that will not change anymore, with the shape of the array or inline table it is. */
+    private record Leaf(TomlValue value, long keyPosition, long valuePosition, TomlPositions.@Nullable Shape shape)
+            implements Node {}
+
+    /** The shape of an array written as a value, which grows as its elements are read. */
+    private static final class InlineArray implements TomlPositions.ArrayShape {
+
+        private final Positions positions = new Positions();
+        private final List<TomlPositions.@Nullable Shape> shapes = new ArrayList<>();
+
+        void add(long position, TomlPositions.@Nullable Shape shape) {
+            positions.add(position);
+            shapes.add(shape);
+        }
+
+        @Override
+        public int size() {
+            return shapes.size();
+        }
+
+        @Override
+        public long position(int index) {
+            return positions.get(index);
+        }
+
+        @Override
+        public TomlPositions.@Nullable Shape elementShape(int index) {
+            return shapes.get(index);
+        }
+    }
+
+    /** A part of a dotted key, and where it is written, as {@link TomlPositions#pack(int, int)} packs it. */
+    private record Key(String name, long position) {}
+
+    /** Packed positions, which grow as they are read. */
+    private static final class Positions {
+
+        private long[] positions = new long[INITIAL_POSITIONS];
+        private int size;
+
+        void add(long position) {
+            if (size == positions.length) {
+                positions = Arrays.copyOf(positions, 2 * size);
+            }
+            positions[size++] = position;
+        }
+
+        long get(int index) {
+            return positions[index];
+        }
+    }
 }

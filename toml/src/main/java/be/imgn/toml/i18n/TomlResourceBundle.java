@@ -234,7 +234,8 @@ public final class TomlResourceBundle extends ResourceBundle {
     }
 
     static TomlResourceBundle read(InputStream in) throws IOException {
-        return new TomlResourceBundle(Toml.parse(ByteSource.wrap(in.readAllBytes())));
+        return new TomlResourceBundle(
+                Toml.parse(ByteSource.wrap(in.readAllBytes())).root());
     }
 
     static String resourceName(String bundleName) {

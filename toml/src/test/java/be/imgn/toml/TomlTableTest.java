@@ -34,7 +34,7 @@ class TomlTableTest {
             [server]
             port = 8080
             "host.name" = "example.com"
-            """);
+            """).root();
 
     @Test
     void getsValueOfKey() {
@@ -92,7 +92,7 @@ class TomlTableTest {
         var table = Toml.parse("""
                 min = -2147483648
                 max = 2147483647
-                """);
+                """).root();
 
         assertThat(table.getInt("min")).isEqualTo(Integer.MIN_VALUE);
         assertThat(table.getInt("max")).isEqualTo(Integer.MAX_VALUE);
@@ -103,7 +103,7 @@ class TomlTableTest {
         var table = Toml.parse("""
                 below = -2147483649
                 above = 2147483648
-                """);
+                """).root();
 
         assertThatExceptionOfType(ArithmeticException.class)
                 .isThrownBy(() -> table.getInt("below"))

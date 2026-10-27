@@ -29,7 +29,7 @@ class TomlBindingsTest {
             host = "example.com"
             port = 8080
             "a.b" = true
-            """);
+            """).root();
 
     @Test
     void checksTableKeys() {
@@ -262,7 +262,8 @@ class TomlBindingsTest {
 
     @Test
     void convertsMap() {
-        var map = TomlBindings.map(TomlBindings::asInt).convert(Toml.parse("b = 1\na = 2"), "x");
+        var map = TomlBindings.map(TomlBindings::asInt)
+                .convert(Toml.parse("b = 1\na = 2").root(), "x");
         assertThat(map).containsExactly(entry("b", 1), entry("a", 2));
         assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> map.put("c", 3));
         assertThatMappingException(() -> TomlBindings.map(TomlBindings::asInt).convert(SERVER, "x"))
@@ -273,7 +274,7 @@ class TomlBindingsTest {
 
     @Test
     void nestsPaths() {
-        var document = Toml.parse("servers = [{ ports = [80, \"443\"] }]");
+        var document = Toml.parse("servers = [{ ports = [80, \"443\"] }]").root();
         assertThatMappingException(() -> TomlBindings.required(
                         document,
                         "",

@@ -62,7 +62,7 @@ class TomlTest {
                 local-time = 07:32
                 array = [1, "two"]
                 table = { key = "value" }
-                """);
+                """).root();
 
         assertThat(table.entries())
                 .containsExactly(
@@ -87,21 +87,21 @@ class TomlTest {
 
     @Test
     void parsesCharSource() throws IOException {
-        assertThat(Toml.parse(CharSource.wrap(DOCUMENT))).isEqualTo(TABLE);
+        assertThat(Toml.parse(CharSource.wrap(DOCUMENT)).root()).isEqualTo(TABLE);
     }
 
     @Test
     void parsesUtf8ByteSource() throws IOException {
         var source = ByteSource.wrap("key = \"é\"".getBytes(UTF_8));
 
-        assertThat(Toml.parse(source).getString("key")).isEqualTo("é");
+        assertThat(Toml.parse(source).root().getString("key")).isEqualTo("é");
     }
 
     @Test
     void parsesUtf8File() throws IOException {
         var file = Files.write(directory.resolve("config.toml"), "key = \"é\"".getBytes(UTF_8));
 
-        assertThat(Toml.parse(file).getString("key")).isEqualTo("é");
+        assertThat(Toml.parse(file).root().getString("key")).isEqualTo("é");
     }
 
     @Test
@@ -121,7 +121,7 @@ class TomlTest {
 
     @Test
     void ignoresByteOrderMark() {
-        assertThat(Toml.parse("﻿" + DOCUMENT)).isEqualTo(TABLE);
+        assertThat(Toml.parse("﻿" + DOCUMENT).root()).isEqualTo(TABLE);
     }
 
     @Test
@@ -131,10 +131,7 @@ class TomlTest {
         assertThatExceptionOfType(TomlParseException.class)
                 .isThrownBy(() -> Toml.parse(source))
                 .withMessage("line 2, column 4: invalid UTF-8")
-                .satisfies(e -> {
-                    assertThat(e.line()).isEqualTo(2);
-                    assertThat(e.column()).isEqualTo(4);
-                });
+                .satisfies(e -> assertThat(e.position()).isEqualTo(new TomlPosition(2, 4)));
     }
 
     @Test
@@ -142,10 +139,7 @@ class TomlTest {
         assertThatExceptionOfType(TomlParseException.class)
                 .isThrownBy(() -> Toml.parse("a = 1\nb = [1 2]"))
                 .withMessage("line 2, column 8: expected ',' or ']' but found '2'")
-                .satisfies(e -> {
-                    assertThat(e.line()).isEqualTo(2);
-                    assertThat(e.column()).isEqualTo(8);
-                });
+                .satisfies(e -> assertThat(e.position()).isEqualTo(new TomlPosition(2, 8)));
     }
 
     @Test

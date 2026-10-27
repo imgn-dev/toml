@@ -27,7 +27,8 @@ import org.junit.jupiter.api.Test;
 
 class TomlResourceBundleTest {
 
-    private static final TomlResourceBundle BUNDLE = new TomlResourceBundle(Toml.parse("""
+    private static final TomlResourceBundle BUNDLE =
+            new TomlResourceBundle(Toml.parse("""
             string = "text"
             integer = 42
             float = 3.5
@@ -43,7 +44,7 @@ class TomlResourceBundleTest {
             not-found = "No item {0}"
             "host.name" = "example.com"
             limits = { max = 2147483648 }
-            """));
+            """).root());
 
     @Test
     void flattensTablesIntoDottedKeys() {
@@ -119,17 +120,19 @@ class TomlResourceBundleTest {
                 .isThrownBy(() -> new TomlResourceBundle(Toml.parse("""
                         "a.b" = 1
                         a.b = 2
-                        """)))
+                        """).root()))
                 .withMessage("more than one value has the key a.b");
     }
 
     @Test
     void rejectsArrayOfOtherValuesThanStrings() {
         assertThatIllegalArgumentException()
-                .isThrownBy(() -> new TomlResourceBundle(Toml.parse("a = [\"one\", 2]")))
+                .isThrownBy(() ->
+                        new TomlResourceBundle(Toml.parse("a = [\"one\", 2]").root()))
                 .withMessage("the array of the key a has a TomlInteger at index 1: only strings are allowed");
         assertThatIllegalArgumentException()
-                .isThrownBy(() -> new TomlResourceBundle(Toml.parse("[[a]]\nb = 1")))
+                .isThrownBy(
+                        () -> new TomlResourceBundle(Toml.parse("[[a]]\nb = 1").root()))
                 .withMessage("the array of the key a has a TomlTable at index 0: only strings are allowed");
     }
 

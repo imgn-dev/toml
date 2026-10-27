@@ -19,14 +19,15 @@ import java.nio.file.Path;
  * Parses and writes <a href="https://toml.io/en/v1.1.0">TOML 1.1</a> documents.
  *
  * <pre>{@code
- * TomlTable config = Toml.parse(file);
+ * TomlTable config = Toml.parse(file).root();
  * int port = config.getInt("server.port");
  *
  * Toml.write(config, CharSink.of(file, StandardCharsets.UTF_8));
  * }</pre>
  *
  * <p>The parser accepts every valid TOML 1.1 document, and rejects every invalid one with a {@link TomlParseException}.
- * A document may start with a byte order mark, which is ignored.
+ * A document may start with a byte order mark, which is ignored. A parsed {@link TomlDocument} also tells where each of
+ * its keys and values is written, through its {@link TomlPositions}.
  *
  * <p>The writer writes the entries of a table before its subtables, and keeps the order of each. It writes nothing but
  * the data: comments, blank lines and the choice between equivalent notations, such as a literal string or a dotted
@@ -43,11 +44,11 @@ public final class Toml {
      * Parses a document.
      *
      * @param document the document
-     * @return the root table of {@code document}
+     * @return the parsed {@code document}
      * @throws TomlParseException if {@code document} is not valid TOML
      * @throws NullPointerException if {@code document} is null
      */
-    public static TomlTable parse(String document) {
+    public static TomlDocument parse(String document) {
         requireNonNull(document, "document");
         return Parser.parse(document);
     }
@@ -56,12 +57,12 @@ public final class Toml {
      * Parses a document read from a source of characters.
      *
      * @param source the source of the document
-     * @return the root table of the document
+     * @return the parsed document
      * @throws IOException if reading {@code source} fails
      * @throws TomlParseException if the document is not valid TOML
      * @throws NullPointerException if {@code source} is null
      */
-    public static TomlTable parse(CharSource source) throws IOException {
+    public static TomlDocument parse(CharSource source) throws IOException {
         requireNonNull(source, "source");
         return parse(source.read());
     }
@@ -70,12 +71,12 @@ public final class Toml {
      * Parses a document read from a source of bytes, which must be UTF-8, as TOML requires.
      *
      * @param source the source of the document
-     * @return the root table of the document
+     * @return the parsed document
      * @throws IOException if reading {@code source} fails
      * @throws TomlParseException if the document is not valid UTF-8, or not valid TOML
      * @throws NullPointerException if {@code source} is null
      */
-    public static TomlTable parse(ByteSource source) throws IOException {
+    public static TomlDocument parse(ByteSource source) throws IOException {
         requireNonNull(source, "source");
         return parse(decode(source.read()));
     }
@@ -84,12 +85,12 @@ public final class Toml {
      * Parses a document read from a file, which must be UTF-8, as TOML requires.
      *
      * @param file the file of the document
-     * @return the root table of the document
+     * @return the parsed document
      * @throws IOException if reading {@code file} fails
      * @throws TomlParseException if the document is not valid UTF-8, or not valid TOML
      * @throws NullPointerException if {@code file} is null
      */
-    public static TomlTable parse(Path file) throws IOException {
+    public static TomlDocument parse(Path file) throws IOException {
         requireNonNull(file, "file");
         return parse(ByteSource.of(file));
     }
@@ -111,7 +112,7 @@ public final class Toml {
         requireNonNull(document, "document");
         requireNonNull(type, "type");
         var binder = Binders.of(type);
-        return type.cast(binder.bind(parse(document)));
+        return type.cast(binder.bind(parse(document).root()));
     }
 
     /**
@@ -132,7 +133,7 @@ public final class Toml {
         requireNonNull(source, "source");
         requireNonNull(type, "type");
         var binder = Binders.of(type);
-        return type.cast(binder.bind(parse(source)));
+        return type.cast(binder.bind(parse(source).root()));
     }
 
     /**
@@ -154,7 +155,7 @@ public final class Toml {
         requireNonNull(source, "source");
         requireNonNull(type, "type");
         var binder = Binders.of(type);
-        return type.cast(binder.bind(parse(source)));
+        return type.cast(binder.bind(parse(source).root()));
     }
 
     /**

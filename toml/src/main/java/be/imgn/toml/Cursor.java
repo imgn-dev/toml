@@ -77,6 +77,11 @@ final class Cursor {
         }
     }
 
+    /** Where the cursor is, as {@link TomlPositions#pack(int, int)} packs it. */
+    long here() {
+        return TomlPositions.pack(line, column);
+    }
+
     Mark mark() {
         return new Mark(position, line, column);
     }

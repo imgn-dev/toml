@@ -29,20 +29,11 @@ public final class TomlParseException extends RuntimeException {
     }
 
     /**
-     * Returns the line of the error.
+     * Returns where the error is.
      *
-     * @return the line of the error, from 1
+     * @return the position of the error
      */
-    public int line() {
-        return line;
-    }
-
-    /**
-     * Returns the column of the error, counted in UTF-16 code units, as in a {@link String}.
-     *
-     * @return the column of the error, from 1
-     */
-    public int column() {
-        return column;
+    public TomlPosition position() {
+        return new TomlPosition(line, column);
     }
 }

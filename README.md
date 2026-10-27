@@ -8,6 +8,7 @@ A [TOML 1.1](https://toml.io/en/v1.1.0) parser and writer for Java 21+, with no 
 - Parses into immutable values: a sealed `TomlValue` hierarchy of records.
 - Reads from gaia's `CharSource` and `ByteSource`, and writes to its `CharSink` and `ByteSink`.
 - Reports errors with their line and column, and what was expected and found.
+- Tells the line and column of each key and value, for tools that report problems with them.
 - Binds documents to records, through code an annotation processor generates: no reflection.
 - Loads `ResourceBundle`s from TOML resources, whose values keep their type.
 
@@ -26,7 +27,7 @@ The module is `be.imgn.toml`. To bind documents to records, see [Binding to reco
 ## Usage
 
 ```java
-TomlTable config = Toml.parse(file);
+TomlTable config = Toml.parse(file).root();
 
 String host = config.getString("server.host");
 int port = config.getInt("server.port");
@@ -39,6 +40,15 @@ Toml.write(updated, CharSink.of(file, StandardCharsets.UTF_8));
 ```
 
 `Toml.parse` also takes a `String`, a `CharSource` or a `ByteSource` (UTF-8), and `Toml.format` writes a table to a `String`.
+It returns a `TomlDocument`: the root table, and the line and column of each key and value. A position is looked up by
+the table or array that holds the key or the element, which must be the very instance the parse returned:
+
+```java
+TomlDocument document = Toml.parse(file);
+TomlTable server = document.root().getTable("server");
+TomlPosition port = document.positions().value(server, "port");
+```
+
 `Toml.writeAtomically(table, file)` replaces a file so that readers, or the next run after a crash, never see a
 half-written document.
 
