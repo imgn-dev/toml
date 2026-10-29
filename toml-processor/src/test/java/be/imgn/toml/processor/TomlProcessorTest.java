@@ -34,7 +34,9 @@ class TomlProcessorTest {
                 }
                 """);
         assertThat(compilation).succeeded().hadNoWarnings();
-        assertThat(compilation).generatedSourceFile("example.Server_TomlBinder").isEqualTo("""
+        assertThat(compilation)
+                .generatedSourceFile("example.$Server$$TomlBinder")
+                .isEqualTo("""
                 package example;
 
                 import be.imgn.toml.TomlBinder;
@@ -45,10 +47,10 @@ class TomlProcessorTest {
 
                 /** Binds tables to {@code Server}. */
                 @Generated("be.imgn.toml.processor.TomlProcessor")
-                public final class Server_TomlBinder implements TomlBinder<Server> {
+                public final class $Server$$TomlBinder implements TomlBinder<Server> {
 
                     /** Creates the binder; the service loader does. */
-                    public Server_TomlBinder() {}
+                    public $Server$$TomlBinder() {}
 
                     @Override
                     public Class<Server> type() {
@@ -64,8 +66,8 @@ class TomlProcessorTest {
                         var table = TomlBindings.table(value, path, "host", "port", "log", "tls");
                         var host = TomlBindings.required(table, path, "host", TomlBindings::asString);
                         var port = TomlBindings.optional(table, path, "port", TomlBindings::asInt);
-                        var level = TomlBindings.required(table, path, "log", Server_TomlBinder::level);
-                        var tls = TomlBindings.required(table, path, "tls", Server_TomlBinder::tls);
+                        var level = TomlBindings.required(table, path, "log", $Server$$TomlBinder::level);
+                        var tls = TomlBindings.required(table, path, "tls", $Server$$TomlBinder::tls);
                         try {
                             return new Server(host, port, level, tls);
                         } catch (RuntimeException e) {
@@ -94,7 +96,7 @@ class TomlProcessorTest {
                 """);
         assertThat(compilation)
                 .generatedFile(StandardLocation.CLASS_OUTPUT, "META-INF/services/be.imgn.toml.TomlBinder")
-                .isEqualTo("example.Server_TomlBinder\n");
+                .isEqualTo("example.$Server$$TomlBinder\n");
     }
 
     @Test
@@ -272,7 +274,7 @@ class TomlProcessorTest {
                 """);
         assertThat(compilation).succeeded();
         assertThat(compilation)
-                .generatedSourceFile("example.Config_TomlBinder")
+                .generatedSourceFile("example.$Config$$TomlBinder")
                 .contains("TomlBindings.table(value, path, \"http-url-path\", \"ipv4-address\", \"utf8\", \"mode\")")
                 .contains("case \"read-only\" -> Config.Mode.READ_ONLY;")
                 .contains("case \"http2\" -> Config.Mode.HTTP2;");

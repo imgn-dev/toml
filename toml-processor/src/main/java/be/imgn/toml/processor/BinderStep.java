@@ -49,7 +49,7 @@ final class BinderStep implements Step {
                     "A @TomlConfig record must be accessible from its package", element, TOML_CONFIG);
         }
         new BinderAnalyzer(context, type).analyze().ifPresent(binder -> {
-            var name = ClassName.of(type).generatedNameWithSuffix("TomlBinder");
+            var name = ClassName.of(type).generatedName("TomlBinder");
             var originating =
                     binder.records().stream().map(Binder.RecordMethod::type).toArray(Element[]::new);
             context.sources().write(name.canonicalName(), scope -> BinderWriter.write(scope, binder), originating);

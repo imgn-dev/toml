@@ -61,7 +61,7 @@ class ProcessorModuleTest {
         var output = new String(javac.getInputStream().readAllBytes(), Charset.defaultCharset());
 
         assertThat(javac.waitFor()).as(output).isZero();
-        assertThat(classes.resolve("app/AppConfig_TomlBinder.class")).exists();
+        assertThat(classes.resolve("app/$AppConfig$$TomlBinder.class")).exists();
     }
 
     private static Path write(Path file, String text) throws IOException {
