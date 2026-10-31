@@ -112,7 +112,7 @@ public final class Toml {
         requireNonNull(document, "document");
         requireNonNull(type, "type");
         var binder = Binders.of(type);
-        return type.cast(binder.bind(parse(document).root()));
+        return bind(binder, parse(document).root(), type, UnknownKeys.REJECT);
     }
 
     /**
@@ -133,7 +133,7 @@ public final class Toml {
         requireNonNull(source, "source");
         requireNonNull(type, "type");
         var binder = Binders.of(type);
-        return type.cast(binder.bind(parse(source).root()));
+        return bind(binder, parse(source).root(), type, UnknownKeys.REJECT);
     }
 
     /**
@@ -155,7 +155,7 @@ public final class Toml {
         requireNonNull(source, "source");
         requireNonNull(type, "type");
         var binder = Binders.of(type);
-        return type.cast(binder.bind(parse(source).root()));
+        return bind(binder, parse(source).root(), type, UnknownKeys.REJECT);
     }
 
     /**
@@ -176,6 +176,69 @@ public final class Toml {
         requireNonNull(file, "file");
         requireNonNull(type, "type");
         return parse(ByteSource.of(file), type);
+    }
+
+    /**
+     * Binds a table to a {@link TomlConfig} record, as {@link #parse(String, Class)} binds a parsed document: a key
+     * that no component takes is an error.
+     *
+     * @param <T> the type of the record
+     * @param table the table
+     * @param type the type of the record
+     * @return the record
+     * @throws TomlMappingException if {@code table} does not bind to the record
+     * @throws IllegalArgumentException if no {@link TomlBinder} is registered for {@code type}
+     * @throws NullPointerException if an argument is null
+     */
+    public static <T> T bind(TomlTable table, Class<T> type) {
+        return bind(table, type, UnknownKeys.REJECT);
+    }
+
+    /**
+     * Binds a table to a {@link TomlConfig} record, and to the records it refers to, doing what {@code unknownKeys}
+     * says with the keys that no component takes.
+     *
+     * @param <T> the type of the record
+     * @param table the table
+     * @param type the type of the record
+     * @param unknownKeys what to do with a key that no component takes
+     * @return the record
+     * @throws TomlMappingException if {@code table} does not bind to the record
+     * @throws IllegalArgumentException if no {@link TomlBinder} is registered for {@code type}
+     * @throws NullPointerException if an argument is null
+     */
+    public static <T> T bind(TomlTable table, Class<T> type, UnknownKeys unknownKeys) {
+        requireNonNull(table, "table");
+        requireNonNull(type, "type");
+        requireNonNull(unknownKeys, "unknownKeys");
+        return bind(Binders.of(type), table, type, unknownKeys);
+    }
+
+    private static <T> T bind(TomlBinder<?> binder, TomlTable table, Class<T> type, UnknownKeys unknownKeys) {
+        return type.cast(binder.bind(table, unknownKeys));
+    }
+
+    /**
+     * Converts a {@link TomlConfig} record to a table, which binds back to an equal record.
+     *
+     * <p>Each component is the value of its key, in the form that {@link TomlConfig} binds: a {@code Duration} in
+     * ISO-8601, such as {@code "PT1M30S"}; a {@code Path} or a {@code URI} as its {@code toString()}; an enum as the
+     * key of its constant; a list or a set as an array, in its iteration order; a map or a record as a table. A null
+     * {@code @Nullable} component is left out.
+     *
+     * @param value the record
+     * @return the table
+     * @throws IllegalArgumentException if no {@link TomlBinder} is registered for the class of {@code value}, or if a
+     *     string in it contains an unpaired surrogate
+     * @throws NullPointerException if {@code value} is null, or a value in it that is not {@code @Nullable}
+     */
+    public static TomlTable toTable(Record value) {
+        requireNonNull(value, "value");
+        return toTable(Binders.of(value.getClass()), value);
+    }
+
+    private static <T> TomlTable toTable(TomlBinder<T> binder, Record value) {
+        return binder.toTable(binder.type().cast(value));
     }
 
     /**

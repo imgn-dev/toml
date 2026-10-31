@@ -125,6 +125,20 @@ methods = ["GET", "POST"]
 - A value that does not bind throws a `TomlMappingException` with its path, such as
   `endpoints[0].methods[1]: expected a string, found an integer`. An unsupported type is a compile error.
 
+The generated code also works the other way, and on tables already in memory:
+
+```java
+TomlTable table = Toml.toTable(config);               // binds back to an equal record
+Toml.writeAtomically(table, file);
+
+AppConfig same = Toml.bind(table, AppConfig.class);
+AppConfig lenient = Toml.bind(table, AppConfig.class, UnknownKeys.IGNORE);
+```
+
+`toTable` writes each value in the form it binds from: a `Duration` in ISO-8601, an enum as its key, and so on; a
+null `@Nullable` component is left out. `UnknownKeys.IGNORE` ignores the keys no component takes, in every record, so
+that a file written by another version of the application still binds.
+
 The processor registers each generated binder in `META-INF/services`, which is enough on the class path. On the module
 path, the module must also provide `be.imgn.toml.TomlBinder` with each binder, which a processor cannot declare. gaia's
 Maven plugin adds those `provides` clauses to the compiled `module-info.class`:

@@ -41,11 +41,15 @@ class TomlProcessorTest {
 
                 import be.imgn.toml.TomlBinder;
                 import be.imgn.toml.TomlBindings;
+                import be.imgn.toml.TomlBoolean;
+                import be.imgn.toml.TomlInteger;
+                import be.imgn.toml.TomlString;
                 import be.imgn.toml.TomlTable;
                 import be.imgn.toml.TomlValue;
+                import be.imgn.toml.UnknownKeys;
                 import javax.annotation.processing.Generated;
 
-                /** Binds tables to {@code Server}. */
+                /** Binds tables to {@code Server}, and writes it to tables. */
                 @Generated("be.imgn.toml.processor.TomlProcessor")
                 public final class $Server$$TomlBinder implements TomlBinder<Server> {
 
@@ -58,39 +62,66 @@ class TomlProcessorTest {
                     }
 
                     @Override
-                    public Server bind(TomlTable table) {
-                        return server(table, "");
+                    public Server bind(TomlTable table, UnknownKeys unknownKeys) {
+                        return server(table, new TomlBindings.Context("", unknownKeys));
                     }
 
-                    private static Server server(TomlValue value, String path) {
-                        var table = TomlBindings.table(value, path, "host", "port", "log", "tls");
-                        var host = TomlBindings.required(table, path, "host", TomlBindings::asString);
-                        var port = TomlBindings.optional(table, path, "port", TomlBindings::asInt);
-                        var level = TomlBindings.required(table, path, "log", $Server$$TomlBinder::level);
-                        var tls = TomlBindings.required(table, path, "tls", $Server$$TomlBinder::tls);
+                    @Override
+                    public TomlTable toTable(Server value) {
+                        return writeServer(value);
+                    }
+
+                    private static Server server(TomlValue value, TomlBindings.Context context) {
+                        var table = TomlBindings.table(value, context, "host", "port", "log", "tls");
+                        var host = TomlBindings.required(table, context, "host", TomlBindings::asString);
+                        var port = TomlBindings.optional(table, context, "port", TomlBindings::asInt);
+                        var level = TomlBindings.required(table, context, "log", $Server$$TomlBinder::level);
+                        var tls = TomlBindings.required(table, context, "tls", $Server$$TomlBinder::tls);
                         try {
                             return new Server(host, port, level, tls);
                         } catch (RuntimeException e) {
-                            throw TomlBindings.rejected(path, e);
+                            throw TomlBindings.rejected(context, e);
                         }
                     }
 
-                    private static Server.Tls tls(TomlValue value, String path) {
-                        var table = TomlBindings.table(value, path, "enabled");
-                        var enabled = TomlBindings.required(table, path, "enabled", TomlBindings::asBoolean);
+                    private static TomlTable writeServer(Server value) {
+                        var builder = TomlTable.builder();
+                        TomlBindings.put(builder, "host", value.host(), e1 -> new TomlString(e1));
+                        TomlBindings.putIfNotNull(builder, "port", value.port(), e1 -> new TomlInteger(e1));
+                        TomlBindings.put(builder, "log", value.level(), e1 -> writeLevel(e1));
+                        TomlBindings.put(builder, "tls", value.tls(), e1 -> writeTls(e1));
+                        return builder.build();
+                    }
+
+                    private static Server.Tls tls(TomlValue value, TomlBindings.Context context) {
+                        var table = TomlBindings.table(value, context, "enabled");
+                        var enabled = TomlBindings.required(table, context, "enabled", TomlBindings::asBoolean);
                         try {
                             return new Server.Tls(enabled);
                         } catch (RuntimeException e) {
-                            throw TomlBindings.rejected(path, e);
+                            throw TomlBindings.rejected(context, e);
                         }
                     }
 
-                    private static Server.Level level(TomlValue value, String path) {
-                        return switch (TomlBindings.asString(value, path)) {
+                    private static TomlTable writeTls(Server.Tls value) {
+                        var builder = TomlTable.builder();
+                        TomlBindings.put(builder, "enabled", value.enabled(), e1 -> new TomlBoolean(e1));
+                        return builder.build();
+                    }
+
+                    private static Server.Level level(TomlValue value, TomlBindings.Context context) {
+                        return switch (TomlBindings.asString(value, context)) {
                             case "debug" -> Server.Level.DEBUG;
                             case "read-only" -> Server.Level.READ_ONLY;
-                            default -> throw TomlBindings.notOneOf(value, path, "debug", "read-only");
+                            default -> throw TomlBindings.notOneOf(value, context, "debug", "read-only");
                         };
+                    }
+
+                    private static TomlString writeLevel(Server.Level value) {
+                        return new TomlString(switch (value) {
+                            case DEBUG -> "debug";
+                            case READ_ONLY -> "read-only";
+                        });
                     }
                 }
                 """);
@@ -275,8 +306,31 @@ class TomlProcessorTest {
         assertThat(compilation).succeeded();
         assertThat(compilation)
                 .generatedSourceFile("example.$Config$$TomlBinder")
-                .contains("TomlBindings.table(value, path, \"http-url-path\", \"ipv4-address\", \"utf8\", \"mode\")")
+                .contains("TomlBindings.table(value, context, \"http-url-path\", \"ipv4-address\", \"utf8\", \"mode\")")
                 .contains("case \"read-only\" -> Config.Mode.READ_ONLY;")
                 .contains("case \"http2\" -> Config.Mode.HTTP2;");
+    }
+
+    @Test
+    void compilesNamesThatTheGeneratedCodeUses() {
+        var compilation = Compiler.compile("example.Config", """
+                package example;
+
+                import java.util.List;
+
+                @be.imgn.toml.TomlConfig
+                record Config(
+                        String value,
+                        String context,
+                        String table,
+                        String builder,
+                        String e,
+                        List<List<String>> e1,
+                        WriteConfig writeConfig) {
+
+                    record WriteConfig(String name) {}
+                }
+                """);
+        assertThat(compilation).succeeded().hadNoWarnings();
     }
 }

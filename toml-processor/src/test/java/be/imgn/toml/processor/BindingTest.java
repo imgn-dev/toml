@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import be.imgn.toml.Toml;
 import be.imgn.toml.TomlMappingException;
+import be.imgn.toml.UnknownKeys;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -16,6 +17,81 @@ import org.junit.jupiter.api.io.TempDir;
 
 /** Binds documents through the code the processor generates, compiled and loaded as an application would. */
 class BindingTest {
+
+    private static final String FULL = """
+            title = "Inventory service"
+            started = 2026-10-18T09:30:00+02:00
+
+            [server]
+            host = "0.0.0.0"
+            port = 8080
+            log-level = "warn"
+            tls.enabled = true
+            tls.cert = "/etc/inventory/cert.pem"
+
+            [database]
+            url = "jdbc:postgresql://db:5432/inventory"
+            pool = { min = 2, max = 16 }
+            timeout = "2.5s"
+            load-factor = 1
+
+            [[endpoints]]
+            path = "/items"
+            methods = ["get", "post"]
+
+            [[endpoints]]
+            path = "/items/{id}"
+            methods = ["get", "put", "delete"]
+            auth = false
+
+            [maintenance]
+            window = 03:00:00
+            "cron.expression" = "0 3 * * SUN"
+
+            [weights]
+            b = 2
+            a = 1
+            """;
+
+    private static final String WRITTEN = """
+            title = "Inventory service"
+            started = 2026-10-18T09:30:00+02:00
+
+            [server]
+            host = "0.0.0.0"
+            port = 8080
+            log-level = "warn"
+
+            [server.tls]
+            enabled = true
+            cert = "/etc/inventory/cert.pem"
+
+            [database]
+            url = "jdbc:postgresql://db:5432/inventory"
+            timeout = "PT2.5S"
+            load-factor = 1.0
+
+            [database.pool]
+            min = 2
+            max = 16
+
+            [[endpoints]]
+            path = "/items"
+            methods = ["get", "post"]
+
+            [[endpoints]]
+            path = "/items/{id}"
+            methods = ["get", "put", "delete"]
+            auth = false
+
+            [maintenance]
+            window = 03:00:00
+            "cron.expression" = "0 3 * * SUN"
+
+            [weights]
+            b = 2
+            a = 1
+            """;
 
     private static final String MINIMAL = """
             title = "t"
@@ -130,40 +206,7 @@ class BindingTest {
 
     @Test
     void bindsDocument() {
-        var config = Toml.parse("""
-                title = "Inventory service"
-                started = 2026-10-18T09:30:00+02:00
-
-                [server]
-                host = "0.0.0.0"
-                port = 8080
-                log-level = "warn"
-                tls.enabled = true
-                tls.cert = "/etc/inventory/cert.pem"
-
-                [database]
-                url = "jdbc:postgresql://db:5432/inventory"
-                pool = { min = 2, max = 16 }
-                timeout = "2.5s"
-                load-factor = 1
-
-                [[endpoints]]
-                path = "/items"
-                methods = ["get", "post"]
-
-                [[endpoints]]
-                path = "/items/{id}"
-                methods = ["get", "put", "delete"]
-                auth = false
-
-                [maintenance]
-                window = 03:00:00
-                "cron.expression" = "0 3 * * SUN"
-
-                [weights]
-                b = 2
-                a = 1
-                """, appConfig);
+        var config = Toml.parse(FULL, appConfig);
         assertThat(config)
                 .hasToString("AppConfig[title=Inventory service, started=2026-10-18T09:30+02:00,"
                         + " server=Server[host=0.0.0.0, port=8080, tls=Tls[enabled=true, cert=/etc/inventory/cert.pem],"
@@ -256,6 +299,73 @@ class BindingTest {
                 .withMessage("retries: expected an integer from -128 to 127, found 300");
         assertThatMappingException("retries = 1\nburst = 1\ntotal = 1\nratio = 16777217\ngroups = []\n", limits)
                 .withMessage("ratio: the integer 16777217 has no exact float value");
+    }
+
+    @Test
+    void bindsTableInMemory() {
+        assertThat(Toml.bind(Toml.parse(MINIMAL).root(), appConfig)).isEqualTo(Toml.parse(MINIMAL, appConfig));
+    }
+
+    @Test
+    void ignoresUnknownKeysOfEveryRecord() {
+        var document = "version = 2\n"
+                + MINIMAL.replace("port = 8080", "port = 8080\nprot = 8081")
+                        .replace("min = 1, max = 2", "min = 1, max = 2, idle = 0")
+                        .replace("methods = [\"get\"]", "methods = [\"get\"], cors = true");
+        var table = Toml.parse(document).root();
+
+        assertThat(Toml.bind(table, appConfig, UnknownKeys.IGNORE)).isEqualTo(Toml.parse(MINIMAL, appConfig));
+        assertThatExceptionOfType(TomlMappingException.class)
+                .isThrownBy(() -> Toml.bind(table, appConfig, UnknownKeys.REJECT))
+                .withMessage("unknown key version");
+    }
+
+    @Test
+    void writesRecordThatBindsBackToAnEqualRecord() {
+        var config = (Record) Toml.parse(FULL, appConfig);
+
+        var table = Toml.toTable(config);
+
+        assertThat(Toml.bind(table, appConfig)).isEqualTo(config);
+    }
+
+    @Test
+    void writesValuesInTheFormsTheyBindFrom() {
+        var table = Toml.toTable((Record) Toml.parse(FULL, appConfig));
+
+        assertThat(Toml.format(table)).isEqualTo(WRITTEN);
+    }
+
+    @Test
+    void writesNumbersAndNestedLists() {
+        var config = (Record) Toml.parse("""
+                retries = -3
+                burst = 1000
+                total = 9_000_000_000
+                ratio = nan
+                groups = [["a", "b"], [], ["c"]]
+                """, limits);
+
+        var table = Toml.toTable(config);
+
+        assertThat(Toml.format(table)).isEqualTo("""
+                retries = -3
+                burst = 1000
+                total = 9000000000
+                ratio = nan
+                groups = [["a", "b"], [], ["c"]]
+                """);
+        assertThat(Toml.bind(table, limits)).isEqualTo(config);
+    }
+
+    @Test
+    void writesRecursiveRecord() {
+        var config = (Record) Toml.parse("""
+                name = "root"
+                children = [{ name = "a", children = [{ name = "b", children = [] }] }]
+                """, tree);
+
+        assertThat(Toml.bind(Toml.toTable(config), tree)).isEqualTo(config);
     }
 
     private static ThrowableAssertAlternative<TomlMappingException> assertThatMappingException(

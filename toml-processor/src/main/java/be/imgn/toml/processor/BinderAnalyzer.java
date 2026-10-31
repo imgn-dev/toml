@@ -90,7 +90,7 @@ final class BinderAnalyzer {
     private final String packageName;
     // The binder's own methods are reserved, so that no conversion method takes their names.
     private final NameAllocator methodNames = new NameAllocator();
-    private final Map<String, String> methodsByType = new HashMap<>();
+    private final Map<String, Pending> methodsByType = new HashMap<>();
     private final Queue<Pending> pending = new ArrayDeque<>();
 
     BinderAnalyzer(ProcessingContext context, TypeElement root) {
@@ -98,6 +98,7 @@ final class BinderAnalyzer {
         this.packageName = MoreElements.packageOf(root).getQualifiedName().toString();
         methodNames.newName("type");
         methodNames.newName("bind");
+        methodNames.newName("toTable");
         method(root);
     }
 
@@ -110,9 +111,9 @@ final class BinderAnalyzer {
             var next = pending.remove();
             var type = next.type();
             if (type.getKind() == ElementKind.ENUM) {
-                enums.add(new EnumMethod(type, next.name(), constants(type)));
+                enums.add(new EnumMethod(type, next.name(), next.writer(), constants(type)));
             } else {
-                records.add(new RecordMethod(type, next.name(), components(type)));
+                records.add(new RecordMethod(type, next.name(), next.writer(), components(type)));
             }
         }
         return context.diagnostics().errorCount() == errors
@@ -123,7 +124,7 @@ final class BinderAnalyzer {
     private List<Component> components(TypeElement type) {
         var variables = new NameAllocator();
         // The names of the generated method's parameters and variables.
-        Stream.of("value", "path", "table", "e").forEach(variables::newName);
+        Stream.of("value", "context", "table", "e").forEach(variables::newName);
         var keys = new HashSet<String>();
         var components = new ArrayList<Component>();
         context.forEach(type.getRecordComponents(), component -> {
@@ -137,8 +138,8 @@ final class BinderAnalyzer {
                 throw new ProcessingException(
                         "A component of a primitive type cannot be @Nullable: use its boxed type", component);
             }
-            components.add(
-                    new Component(variables.newName(name), key, optional, conversion(component.asType(), component)));
+            components.add(new Component(
+                    name, variables.newName(name), key, optional, conversion(component.asType(), component)));
         });
         return components;
     }
@@ -215,7 +216,8 @@ final class BinderAnalyzer {
         var kind = type.getKind();
         if ((kind == ElementKind.RECORD && type.getTypeParameters().isEmpty()) || kind == ElementKind.ENUM) {
             checkAccessible(type, component);
-            return Optional.of(new BinderMethod(method(type)));
+            var method = method(type);
+            return Optional.of(new BinderMethod(method.name(), method.writer()));
         }
         return Optional.empty();
     }
@@ -236,14 +238,15 @@ final class BinderAnalyzer {
         }
     }
 
-    /** Returns the name of the method that binds a record or an enum, which is analyzed once. */
-    private String method(TypeElement type) {
+    /** Returns the methods that bind and write a record or an enum, which is analyzed once. */
+    private Pending method(TypeElement type) {
         return methodsByType.computeIfAbsent(type.getQualifiedName().toString(), qualifiedName -> {
             var simpleName = type.getSimpleName().toString();
             var name =
                     methodNames.newName(simpleName.substring(0, 1).toLowerCase(Locale.ROOT) + simpleName.substring(1));
-            pending.add(new Pending(type, name));
-            return name;
+            var method = new Pending(type, name, methodNames.newName("write" + simpleName));
+            pending.add(method);
+            return method;
         });
     }
 
@@ -259,6 +262,6 @@ final class BinderAnalyzer {
                 "Cannot bind the type " + type + ": see @TomlConfig for the types it binds", component);
     }
 
-    /** A record or an enum to analyze, and the name of the method that binds it. */
-    private record Pending(TypeElement type, String name) {}
+    /** A record or an enum to analyze, and the names of the methods that bind and write it. */
+    private record Pending(TypeElement type, String name, String writer) {}
 }
