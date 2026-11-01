@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- child.project.url.inherit.append.path: the attribute is not inherited from
-     be.imgn.parent:parent once <url> is redefined here, so it is repeated. -->
+     be.imgn.parent:parent once <url> is redefined here, so it is repeated;
+     otherwise Maven appends each module's artifactId to the toml URL. -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd"
@@ -11,13 +12,13 @@
   <parent>
     <groupId>be.imgn.parent</groupId>
     <artifactId>parent</artifactId>
-    <version>2026-11-SNAPSHOT</version>
+    <version>2026-11-01</version>
     <relativePath/>
   </parent>
 
   <groupId>be.imgn.toml</groupId>
   <artifactId>toml-parent</artifactId>
-  <version>0.1.0-SNAPSHOT</version>
+  <version>${revision}</version>
   <packaging>pom</packaging>
 
   <name>TOML parent</name>
@@ -36,16 +37,130 @@
   </scm>
 
   <modules>
+    <!-- Published. -->
     <module>toml</module>
     <module>toml-processor</module>
+    <!-- Not published: the guide, which goes to GitHub Pages. -->
+    <module>docs</module>
   </modules>
 
   <properties>
+    <!-- ${revision}, the one toml version, is set in .mvn/maven.config rather
+         than here, so that a release changes no POM. A release overrides it:
+         -Drevision=1.2.3. -->
+
     <!-- The baseline the library runs on. The parent wires this into the
          compiler's and javadoc's release and into requireJavaVersion. -->
     <java.release>21</java.release>
 
-    <gaia.version>0.1.2-SNAPSHOT</gaia.version>
+    <!-- Reproducible builds. A release sets it to the time of the commit it
+         releases (-Dproject.build.outputTimestamp, in release.yml and
+         scripts/release.sh); this value only serves other builds. -->
+    <project.build.outputTimestamp>2026-11-01T00:00:00Z</project.build.outputTimestamp>
+
+    <gaia.version>0.1.2</gaia.version>
+
+    <flatten-maven-plugin.version>1.8.0</flatten-maven-plugin.version>
   </properties>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>flatten-maven-plugin</artifactId>
+          <version>${flatten-maven-plugin.version}</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+
+    <plugins>
+      <!-- Replaces ${revision} in the installed and deployed POMs. This
+           configuration is for toml-parent itself, which is published as a
+           parent: only the CI-friendly properties are resolved and everything
+           else, build configuration included, is kept. Library modules switch
+           to the flatten-library-poms profile below. -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>flatten-maven-plugin</artifactId>
+        <configuration>
+          <flattenMode>resolveCiFriendliesOnly</flattenMode>
+          <updatePomFile>true</updatePomFile>
+          <outputDirectory>${project.build.directory}</outputDirectory>
+        </configuration>
+        <executions>
+          <execution>
+            <id>flatten</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>flatten</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <!-- Library POMs keep their parent chain (toml-parent and
+         be.imgn.parent:parent are both on Central), with ${revision} resolved.
+         Their dependencies are flattened: written with concrete versions, and
+         without the test-scoped ones, which mean nothing to a user. Activated
+         the way the parent activates Checkstyle, by the presence of Java
+         sources, so it never applies to toml-parent. (resolveCiFriendliesOnly
+         cannot be combined with flattened dependencies: flatten 1.8.0 fails
+         with a NullPointerException in CiModelInterpolator.) -->
+    <profile>
+      <id>flatten-library-poms</id>
+      <activation>
+        <file>
+          <exists>${basedir}/src/main/java</exists>
+        </file>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>flatten-maven-plugin</artifactId>
+            <configuration>
+              <flattenMode>defaults</flattenMode>
+              <pomElements>
+                <parent>interpolate</parent>
+                <name>interpolate</name>
+                <description>interpolate</description>
+                <dependencies>flatten</dependencies>
+              </pomElements>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <!-- CI also builds on JDK 21, the baseline. There, Error Prone refuses to
+         start without this javac flag, which the parent (written for JDK 25)
+         does not pass. Appended to the parent's compilerArgs, not replacing
+         them, and only when the build itself runs on JDK 21. -->
+    <profile>
+      <id>error-prone-on-jdk-21</id>
+      <activation>
+        <jdk>21</jdk>
+      </activation>
+      <build>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-compiler-plugin</artifactId>
+              <configuration>
+                <compilerArgs combine.children="append">
+                  <arg>-XDaddTypeAnnotationsToSymbol=true</arg>
+                </compilerArgs>
+              </configuration>
+            </plugin>
+          </plugins>
+        </pluginManagement>
+      </build>
+    </profile>
+  </profiles>
 
 </project>

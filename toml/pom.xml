@@ -8,7 +8,7 @@
   <parent>
     <groupId>be.imgn.toml</groupId>
     <artifactId>toml-parent</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>${revision}</version>
   </parent>
 
   <artifactId>toml</artifactId>

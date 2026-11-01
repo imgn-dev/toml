@@ -12,6 +12,9 @@ A [TOML 1.1](https://toml.io/en/v1.1.0) parser and writer for Java 21+, with no 
 - Binds documents to records, through code an annotation processor generates: no reflection.
 - Loads `ResourceBundle`s from TOML resources, whose values keep their type.
 
+[Guide](https://imgn-dev.github.io/toml/). API documentation: [latest](https://imgn-dev.github.io/toml/api/latest/),
+or [every released version](https://imgn-dev.github.io/toml/api/).
+
 ## Coordinates
 
 ```xml
@@ -147,7 +150,7 @@ Maven plugin adds those `provides` clauses to the compiled `module-info.class`:
 <plugin>
   <groupId>be.imgn.gaia</groupId>
   <artifactId>gaia-maven-plugin</artifactId>
-  <version>0.1.2-SNAPSHOT</version>
+  <version>0.1.2</version>
   <executions>
     <execution>
       <goals>

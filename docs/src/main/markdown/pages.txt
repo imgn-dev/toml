@@ -1,0 +1,7 @@
+# The pages of the guide, in the order of the navigation. index.md is the home page.
+
+index.md
+documents.md
+positions.md
+binding.md
+resource-bundles.md
