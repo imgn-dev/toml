@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Positions and errors · toml</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+<a class="brand" href="index.html">toml</a>
+<a href="api/latest/">API</a>
+<a href="https://github.com/imgn-dev/toml">GitHub</a>
+</header>
+<div class="layout">
+<nav aria-label="Guide">
+<ul>
+<li><a href="index.html">toml</a></li>
+<li><a href="documents.html">Documents</a></li>
+<li><a href="positions.html" aria-current="page">Positions and errors</a></li>
+<li><a href="binding.html">Binding to records</a></li>
+<li><a href="resource-bundles.html">Resource bundles</a></li>
+</ul>
+</nav>
+<main>
+<h1 id="positions-and-errors">Positions and errors</h1>
+<h2 id="positions-of-keys-and-values">Positions of keys and values</h2>
+<p>A parsed <a href="api/latest/be.imgn.toml/be/imgn/toml/TomlDocument.html"><code>TomlDocument</code></a> tells where each key and value is written, as a
+<a href="api/latest/be.imgn.toml/be/imgn/toml/TomlPosition.html"><code>TomlPosition</code></a>: a line and a column, both from 1. Tools that check a document beyond
+its syntax use them to report a problem where it is.</p>
+<pre><code class="language-java">TomlDocument document = Toml.parse(file);
+TomlTable server = document.root().getTable(&quot;server&quot;);
+TomlPosition port = document.positions().value(server, &quot;port&quot;);
+</code></pre>
+<p><a href="api/latest/be.imgn.toml/be/imgn/toml/TomlPositions.html"><code>TomlPositions</code></a> has the position of a key (<code>key</code>), of its value (<code>value</code>), and of an
+element of an array (<code>element</code>).</p>
+<ul>
+<li>A position is looked up by the table or array that holds the key or the element, which must be the very instance
+the parse returned: positions compare tables and arrays by identity, as equal tables can be written in several
+places. A copy of a table, such as one built from it with <code>toBuilder()</code>, has no positions.</li>
+<li>The key is a key of that table, never a dotted path: the position of <code>port</code> in <code>[server]</code> is
+<code>key(root.getTable(&quot;server&quot;), &quot;port&quot;)</code>.</li>
+<li>A line ends with <code>\n</code> or <code>\r\n</code>, and a column counts UTF-16 code units, as in a <code>String</code>. The byte order mark a
+document may start with is not counted.</li>
+</ul>
+<h2 id="syntax-errors">Syntax errors</h2>
+<p>A document that is not valid TOML throws a <a href="api/latest/be.imgn.toml/be/imgn/toml/TomlParseException.html"><code>TomlParseException</code></a>. Its message
+starts with the line and column of the error, and states what was expected and what was found; <code>position()</code> returns
+the position alone.</p>
+<ul>
+<li>An error about a whole value, such as an integer that does not fit in 64 bits or an invalid date, is where the value
+starts.</li>
+<li>An error about the definition of a table, such as a table defined twice, is at the <code>[</code> of its header.</li>
+<li>An error about a key, such as a duplicate key, is at that key, or at the part of a dotted key it is about, inside a
+header too.</li>
+</ul>
+<p>These are the positions <code>TomlPositions</code> reports. Any other error is where the parser found it.</p>
+<h2 id="binding-errors">Binding errors</h2>
+<p>A value that does not bind to a record throws a <a href="api/latest/be.imgn.toml/be/imgn/toml/TomlMappingException.html"><code>TomlMappingException</code></a>,
+whose <code>path()</code> tells where the value is: its keys separated by dots, with the index of each element of an array in
+brackets, as in <code>endpoints[0].methods[1]: expected a string, found an integer</code>. See <a href="binding.html">Binding to records</a>.</p>
+
+</main>
+</div>
+</body>
+</html>

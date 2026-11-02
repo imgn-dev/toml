@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>toml</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+<a class="brand" href="index.html">toml</a>
+<a href="api/latest/">API</a>
+<a href="https://github.com/imgn-dev/toml">GitHub</a>
+</header>
+<div class="layout">
+<nav aria-label="Guide">
+<ul>
+<li><a href="index.html" aria-current="page">toml</a></li>
+<li><a href="documents.html">Documents</a></li>
+<li><a href="positions.html">Positions and errors</a></li>
+<li><a href="binding.html">Binding to records</a></li>
+<li><a href="resource-bundles.html">Resource bundles</a></li>
+</ul>
+</nav>
+<main>
+<h1 id="toml">toml</h1>
+<p>toml is a <a href="https://toml.io/en/v1.1.0">TOML 1.1</a> parser and writer for Java 21 or later, with no dependency besides
+<a href="https://imgn-dev.github.io/gaia/">gaia-core</a>. Every class is documented in the
+<a href="https://imgn-dev.github.io/toml/api/latest/">API documentation</a>.</p>
+<ul>
+<li>It accepts every valid document and rejects every invalid one in the
+<a href="https://github.com/toml-lang/toml-test">toml-test</a> suite (TOML 1.1.0 manifest).</li>
+<li>It parses into immutable values: a sealed hierarchy of records. See <a href="documents.html">Documents</a>.</li>
+<li>It reads from gaia's <code>CharSource</code> and <code>ByteSource</code>, and writes to its <code>CharSink</code> and <code>ByteSink</code>.</li>
+<li>It reports errors with their line and column, and tells the line and column of each key and value. See
+<a href="positions.html">Positions and errors</a>.</li>
+<li>It binds documents to records, through code an annotation processor generates: no reflection. See
+<a href="binding.html">Binding to records</a>.</li>
+<li>It loads <code>ResourceBundle</code>s from TOML resources, whose values keep their type. See
+<a href="resource-bundles.html">Resource bundles</a>.</li>
+</ul>
+<h2 id="artifacts">Artifacts</h2>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Module</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>toml</code></td>
+<td><code>be.imgn.toml</code></td>
+<td><a href="documents.html">Parses</a>, <a href="documents.html#writing">writes</a> and <a href="binding.html">binds</a> documents</td>
+</tr>
+<tr>
+<td><code>toml-processor</code></td>
+<td><code>be.imgn.toml.processor</code></td>
+<td><a href="binding.html#setting-up-the-processor">Generates the code that binds documents to records</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="setting-up">Setting up</h2>
+<pre><code class="language-xml">&lt;dependency&gt;
+  &lt;groupId&gt;be.imgn.toml&lt;/groupId&gt;
+  &lt;artifactId&gt;toml&lt;/artifactId&gt;
+  &lt;version&gt;${toml.version}&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre>
+<p>On the module path, require the module: <code>requires be.imgn.toml;</code>. It requires <code>be.imgn.gaia.core</code> transitively, as
+gaia's sources and sinks are part of its API.</p>
+<h2 id="nulls">Nulls</h2>
+<p>Every package of toml is annotated with JSpecify's <code>@NullMarked</code>: a parameter or a return value is never null unless
+it is annotated <code>@Nullable</code>. A method given null where it doesn't accept it throws <code>NullPointerException</code>, naming the
+parameter.</p>
+
+</main>
+</div>
+</body>
+</html>
