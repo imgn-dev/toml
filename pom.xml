@@ -49,10 +49,6 @@
          than here, so that a release changes no POM. A release overrides it:
          -Drevision=1.2.3. -->
 
-    <!-- The baseline the library runs on. The parent wires this into the
-         compiler's and javadoc's release and into requireJavaVersion. -->
-    <java.release>21</java.release>
-
     <!-- Reproducible builds. A release sets it to the time of the commit it
          releases (-Dproject.build.outputTimestamp, in release.yml and
          scripts/release.sh); this value only serves other builds. -->
@@ -133,32 +129,6 @@
             </configuration>
           </plugin>
         </plugins>
-      </build>
-    </profile>
-
-    <!-- CI also builds on JDK 21, the baseline. There, Error Prone refuses to
-         start without this javac flag, which the parent (written for JDK 25)
-         does not pass. Appended to the parent's compilerArgs, not replacing
-         them, and only when the build itself runs on JDK 21. -->
-    <profile>
-      <id>error-prone-on-jdk-21</id>
-      <activation>
-        <jdk>21</jdk>
-      </activation>
-      <build>
-        <pluginManagement>
-          <plugins>
-            <plugin>
-              <groupId>org.apache.maven.plugins</groupId>
-              <artifactId>maven-compiler-plugin</artifactId>
-              <configuration>
-                <compilerArgs combine.children="append">
-                  <arg>-XDaddTypeAnnotationsToSymbol=true</arg>
-                </compilerArgs>
-              </configuration>
-            </plugin>
-          </plugins>
-        </pluginManagement>
       </build>
     </profile>
   </profiles>

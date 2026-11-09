@@ -1,6 +1,6 @@
 # toml
 
-toml is a [TOML 1.1](https://toml.io/en/v1.1.0) parser and writer for Java 21 or later, with no dependency besides
+toml is a [TOML 1.1](https://toml.io/en/v1.1.0) parser and writer for Java 25 or later, with no dependency besides
 [gaia-core](https://imgn-dev.github.io/gaia/). Every class is documented in the
 [API documentation](https://imgn-dev.github.io/toml/api/latest/).
 

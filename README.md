@@ -1,6 +1,6 @@
 # toml
 
-A [TOML 1.1](https://toml.io/en/v1.1.0) parser and writer for Java 21+, with no dependency besides
+A [TOML 1.1](https://toml.io/en/v1.1.0) parser and writer for Java 25+, with no dependency besides
 [gaia-core](https://github.com/imgn-dev/gaia).
 
 - Accepts every valid document and rejects every invalid one in the
@@ -21,7 +21,7 @@ or [every released version](https://imgn-dev.github.io/toml/api/).
 <dependency>
   <groupId>be.imgn.toml</groupId>
   <artifactId>toml</artifactId>
-  <version>0.1.0-SNAPSHOT</version>
+  <version>0.2.0-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -84,7 +84,7 @@ Annotate the root record with `@TomlConfig`, and add the processor to the compil
       <path>
         <groupId>be.imgn.toml</groupId>
         <artifactId>toml-processor</artifactId>
-        <version>0.1.0-SNAPSHOT</version>
+        <version>0.2.0-SNAPSHOT</version>
       </path>
     </annotationProcessorPaths>
   </configuration>
