@@ -95,10 +95,15 @@ public final class TomlBindings {
         if (context.unknownKeys() == UnknownKeys.IGNORE) {
             return table;
         }
-        var unknown = table.entries().keySet().stream()
-                .filter(key -> !known.contains(key))
-                .map(Emitter::formatKey)
-                .toList();
+        List<String> unknown = List.of();
+        for (var key : table.entries().keySet()) {
+            if (!known.contains(key)) {
+                if (unknown.isEmpty()) {
+                    unknown = new ArrayList<>();
+                }
+                unknown.add(Emitter.formatKey(key));
+            }
+        }
         if (!unknown.isEmpty()) {
             throw new TomlMappingException(
                     context.path(),
@@ -241,7 +246,7 @@ public final class TomlBindings {
         requireNonNull(element, "element");
         return (value, context) -> {
             var values = array(value, context);
-            var set = new LinkedHashSet<T>();
+            var set = LinkedHashSet.<T>newLinkedHashSet(values.size());
             for (var i = 0; i < values.size(); i++) {
                 var elementContext = index(context, i);
                 if (!set.add(element.convert(values.get(i), elementContext))) {
@@ -268,7 +273,7 @@ public final class TomlBindings {
             if (!(value instanceof TomlTable table)) {
                 throw mismatch(value, context, "a table");
             }
-            var map = new LinkedHashMap<String, T>();
+            var map = LinkedHashMap.<String, T>newLinkedHashMap(table.entries().size());
             table.entries().forEach((key, entryValue) -> map.put(key, entry.convert(entryValue, child(context, key))));
             return Collections.unmodifiableSequencedMap(map);
         };

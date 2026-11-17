@@ -89,6 +89,8 @@
               <goal>java</goal>
             </goals>
             <configuration>
+              <!-- toml-parent skips exec everywhere but in the modules that use it. -->
+              <skip>false</skip>
               <mainClass>be.imgn.toml.docs.SiteGenerator</mainClass>
               <arguments>
                 <argument>${project.basedir}/src/main/markdown</argument>

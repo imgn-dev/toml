@@ -198,6 +198,15 @@ int retries = messages.getInt("errors.retries");
 ./mvnw verify
 ```
 
+## Benchmarks
+
+JMH benchmarks of parsing against Jackson and tomlj, on generated documents: an application's configuration of about
+1 KB, catalogs of products of 40 KB and 1.7 MB, and documents of numbers and of strings alone, of about 330 KB each:
+
+```sh
+./mvnw -pl toml-benchmarks -am package exec:exec -DskipTests -Djmh.args="ParseBenchmark -prof gc"
+```
+
 ## License
 
 [Apache License 2.0](LICENSE).

@@ -40,7 +40,8 @@
     <!-- Published. -->
     <module>toml</module>
     <module>toml-processor</module>
-    <!-- Not published: the guide, which goes to GitHub Pages. -->
+    <!-- Not published: the JMH benchmarks, and the guide, which goes to GitHub Pages. -->
+    <module>toml-benchmarks</module>
     <module>docs</module>
   </modules>
 
@@ -62,6 +63,18 @@
   <build>
     <pluginManagement>
       <plugins>
+        <!-- Only the modules that run something with exec turn it on: toml-benchmarks, so that the reactor
+             can build what the benchmarks need and run them in one command, and docs, which generates
+             the guide. -->
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>exec-maven-plugin</artifactId>
+          <configuration>
+            <skip>true</skip>
+            <!-- Checked before skip is. -->
+            <executable>java</executable>
+          </configuration>
+        </plugin>
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>flatten-maven-plugin</artifactId>

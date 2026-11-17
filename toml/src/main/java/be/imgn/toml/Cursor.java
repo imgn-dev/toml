@@ -1,37 +1,45 @@
 package be.imgn.toml;
 
-/** A position in a text being parsed, which knows its line and column for error messages. */
+/**
+ * A position in a text being parsed, which knows its line and column for error messages.
+ *
+ * <p>The cursor reads the characters from a copy of the text in an array, which saves {@link String#charAt(int)}'s
+ * check of the string's coder on every read. It counts lines, but not columns: it keeps where the current line starts,
+ * and a column is the distance from there, computed when a position is asked for.
+ */
 final class Cursor {
 
     private final String text;
+    private final char[] chars;
     private int position;
     private int line = 1;
-    private int column = 1;
+    private int lineStart;
 
     Cursor(String text) {
         this.text = text;
+        chars = text.toCharArray();
     }
 
     boolean atEnd() {
-        return position >= text.length();
+        return position >= chars.length;
     }
 
     char peek() {
-        return text.charAt(position);
+        return chars[position];
     }
 
     /** Whether the character {@code ahead} positions from here is {@code c}, without moving. */
     boolean isAt(int ahead, char c) {
-        return position + ahead < text.length() && text.charAt(position + ahead) == c;
+        return position + ahead < chars.length && chars[position + ahead] == c;
     }
 
     boolean isAt(char c) {
-        return isAt(0, c);
+        return position < chars.length && chars[position] == c;
     }
 
     /** Whether the character {@code ahead} positions from here is an ASCII digit, without moving. */
     boolean isDigitAt(int ahead) {
-        return position + ahead < text.length() && isDigit(text.charAt(position + ahead));
+        return position + ahead < chars.length && isDigit(chars[position + ahead]);
     }
 
     /** Whether the {@code count} characters from here are ASCII digits, without moving. */
@@ -45,14 +53,17 @@ final class Cursor {
     }
 
     char advance() {
-        var c = text.charAt(position++);
+        var c = chars[position++];
         if (c == '\n') {
             line++;
-            column = 1;
-        } else {
-            column++;
+            lineStart = position;
         }
         return c;
+    }
+
+    /** Moves over {@code count} characters, which must not be line feeds. */
+    void skip(int count) {
+        position += count;
     }
 
     boolean match(char c) {
@@ -77,27 +88,104 @@ final class Cursor {
         }
     }
 
+    /** The index of the next character in the text. */
+    int position() {
+        return position;
+    }
+
+    char charAt(int index) {
+        return chars[index];
+    }
+
+    /** The text from {@code from} to {@code to}, as indexes {@link #position()} returned. */
+    String text(int from, int to) {
+        return text.substring(from, to);
+    }
+
+    /** Parses the text from {@code from} to {@code to}, as {@link Long#parseLong(CharSequence, int, int, int)} does. */
+    long parseLong(int from, int to, int radix) {
+        return Long.parseLong(text, from, to, radix);
+    }
+
+    /** Appends the text from {@code from} to {@code to} to {@code builder}. */
+    void appendTo(StringBuilder builder, int from, int to) {
+        builder.append(chars, from, to - from);
+    }
+
+    /**
+     * Moves over the characters of a bare key, and returns where they end.
+     *
+     * @return the index after the last character of the bare key
+     */
+    int skipBareKey() {
+        var i = position;
+        while (i < chars.length && isBareKeyChar(chars[i])) {
+            i++;
+        }
+        position = i;
+        return i;
+    }
+
+    /**
+     * Moves over the characters that a string or a comment holds as they are written, and returns where they end. It
+     * stops before {@code stop}, a backslash if {@code escapes}, a control character other than tab, which includes the
+     * newlines, or the end of the text.
+     *
+     * @return the index after the last character moved over
+     * @throws TomlParseException at an unpaired surrogate, which has no UTF-8 encoding and so cannot be in a document
+     */
+    int skipText(char stop, boolean escapes) {
+        var i = position;
+        while (i < chars.length) {
+            var c = chars[i];
+            if (c == stop || (escapes && c == '\\') || isControl(c)) {
+                break;
+            }
+            if (Character.isSurrogate(c)) {
+                i = endOfSurrogatePair(i);
+            }
+            i++;
+        }
+        position = i;
+        return i;
+    }
+
+    /** Returns the index of the low surrogate that pairs with the high surrogate at {@code index}. */
+    private int endOfSurrogatePair(int index) {
+        var c = chars[index];
+        if (!Character.isHighSurrogate(c) || index + 1 == chars.length || !Character.isLowSurrogate(chars[index + 1])) {
+            position = index;
+            throw error("the unpaired surrogate U+" + Requirements.hex(c) + " is not allowed");
+        }
+        return index + 1;
+    }
+
+    /** Whether a character is a control character other than tab, as the newlines are. */
+    private static boolean isControl(char c) {
+        return c < ' ' ? c != '\t' : c == '\u007F';
+    }
+
     /** Where the cursor is, as {@link TomlPositions#pack(int, int)} packs it. */
     long here() {
-        return TomlPositions.pack(line, column);
+        return TomlPositions.pack(line, column());
     }
 
     Mark mark() {
-        return new Mark(position, line, column);
+        return new Mark(position, line, lineStart);
     }
 
     void reset(Mark mark) {
         position = mark.position();
         line = mark.line();
-        column = mark.column();
+        lineStart = mark.lineStart();
     }
 
     TomlParseException error(String message) {
-        return new TomlParseException(message, line, column);
+        return new TomlParseException(message, line, column());
     }
 
     TomlParseException error(String message, Throwable cause) {
-        return new TomlParseException(message, line, column, cause);
+        return new TomlParseException(message, line, column(), cause);
     }
 
     /** An error at a position read earlier, such as the key a semantic rule rejects. */
@@ -120,6 +208,14 @@ final class Cursor {
         return c >= '0' && c <= '9';
     }
 
+    static boolean isBareKeyChar(char c) {
+        return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || isDigit(c) || c == '_' || c == '-';
+    }
+
+    private int column() {
+        return position - lineStart + 1;
+    }
+
     private static String describe(char c) {
         return switch (c) {
             case '\n' -> "'\\n'";
@@ -129,6 +225,6 @@ final class Cursor {
         };
     }
 
-    /** A saved position, to go back to. */
-    record Mark(int position, int line, int column) {}
+    /** A saved position, to go back to, with the line it is on and where that line starts. */
+    record Mark(int position, int line, int lineStart) {}
 }

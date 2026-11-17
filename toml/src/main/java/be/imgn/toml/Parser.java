@@ -111,7 +111,8 @@ final class Parser {
 
     private TableNode parentOf(List<Key> keys) {
         var table = root;
-        for (var key : keys.subList(0, keys.size() - 1)) {
+        for (var i = 0; i < keys.size() - 1; i++) {
+            var key = keys.get(i);
             var existing = table.entries.get(key.name());
             table = switch (existing) {
                 case null -> table.add(key.name(), new TableNode(Kind.IMPLICIT, key.position(), key.position()));
@@ -159,7 +160,8 @@ final class Parser {
         var value = value();
         var shape = valueShape;
         var table = base;
-        for (var key : keys.subList(0, keys.size() - 1)) {
+        for (var i = 0; i < keys.size() - 1; i++) {
+            var key = keys.get(i);
             var existing = table.entries.get(key.name());
             table = switch (existing) {
                 case null -> openDottedTable(table, key);
@@ -205,18 +207,11 @@ final class Parser {
         if (in.isAt('"') || in.isAt('\'')) {
             return string(false);
         }
-        if (in.atEnd() || !isBareKeyChar(in.peek())) {
+        if (in.atEnd() || !Cursor.isBareKeyChar(in.peek())) {
             throw in.expected("a key");
         }
-        var key = new StringBuilder();
-        while (!in.atEnd() && isBareKeyChar(in.peek())) {
-            key.append(in.advance());
-        }
-        return key.toString();
-    }
-
-    private static boolean isBareKeyChar(char c) {
-        return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || Cursor.isDigit(c) || c == '_' || c == '-';
+        var start = in.position();
+        return in.text(start, in.skipBareKey());
     }
 
     // Values
@@ -290,6 +285,7 @@ final class Parser {
 
     private TomlValue number() {
         var start = in.here();
+        var from = in.position();
         var negative = in.isAt('-');
         var signed = in.match('-') || in.match('+');
         if (in.isAt('i') || in.isAt('n')) {
@@ -304,7 +300,7 @@ final class Parser {
             }
             return radixInteger(start);
         }
-        return decimal(negative, start);
+        return decimal(start, from);
     }
 
     private TomlValue infinityOrNan(boolean negative) {
@@ -317,67 +313,109 @@ final class Parser {
     }
 
     private TomlValue radixInteger(long start) {
-        in.advance();
+        in.skip(1);
         var prefix = in.advance();
         var radix = switch (prefix) {
             case 'x' -> HEXADECIMAL_RADIX;
             case 'o' -> OCTAL_RADIX;
             default -> BINARY_RADIX;
         };
-        var digits = digits(radix, "a digit in base " + radix);
+        var from = in.position();
+        var underscores = digits(radix, "a digit in base " + radix);
+        var to = in.position();
         try {
-            return new TomlInteger(Long.parseLong(digits, radix));
+            return new TomlInteger(
+                    underscores ? Long.parseLong(withoutUnderscores(from, to), radix) : in.parseLong(from, to, radix));
         } catch (NumberFormatException e) {
-            throw Cursor.error(start, "the integer 0" + prefix + digits + " does not fit in 64 bits", e);
+            throw Cursor.error(
+                    start, "the integer 0" + prefix + withoutUnderscores(from, to) + " does not fit in 64 bits", e);
         }
     }
 
-    private TomlValue decimal(boolean negative, long start) {
-        var integerPart = digits(DECIMAL_RADIX, "a digit");
-        if (integerPart.length() > 1 && integerPart.charAt(0) == '0') {
+    /** Reads a decimal integer or float, whose sign, if any, is at {@code from}. */
+    private TomlValue decimal(long start, int from) {
+        var integerPart = in.position();
+        var underscores = digits(DECIMAL_RADIX, "a digit");
+        if (in.position() - integerPart > 1 && in.charAt(integerPart) == '0') {
             throw Cursor.error(start, "a number cannot have leading zeros");
         }
-        var number = new StringBuilder(negative ? "-" : "").append(integerPart);
-        var isFloat = false;
+        if (!in.isAt('.') && !in.isAt('e') && !in.isAt('E')) {
+            return integer(start, from, underscores);
+        }
+        underscores |= fractionAndExponent();
+        var to = in.position();
+        return new TomlFloat(Double.parseDouble(underscores ? withoutUnderscores(from, to) : in.text(from, to)));
+    }
+
+    /**
+     * Moves over the fraction and the exponent of a float, one of which can be missing, and returns whether there was
+     * an underscore.
+     */
+    private boolean fractionAndExponent() {
+        var underscores = false;
         if (in.match('.')) {
-            isFloat = true;
-            number.append('.').append(digits(DECIMAL_RADIX, "a digit after the decimal point"));
+            underscores = digits(DECIMAL_RADIX, "a digit after the decimal point");
         }
         if (in.match('e') || in.match('E')) {
-            isFloat = true;
-            number.append('e');
             if (in.isAt('+') || in.isAt('-')) {
-                number.append(in.advance());
+                in.skip(1);
             }
-            number.append(digits(DECIMAL_RADIX, "a digit of the exponent"));
+            underscores |= digits(DECIMAL_RADIX, "a digit of the exponent");
         }
-        if (isFloat) {
-            return new TomlFloat(Double.parseDouble(number.toString()));
-        }
+        return underscores;
+    }
+
+    /** Parses the decimal integer that ends here, whose sign, if any, is at {@code from}. */
+    private TomlValue integer(long start, int from, boolean underscores) {
+        var to = in.position();
         try {
-            return new TomlInteger(Long.parseLong(number.toString()));
+            return new TomlInteger(
+                    underscores ? Long.parseLong(withoutUnderscores(from, to)) : in.parseLong(from, to, DECIMAL_RADIX));
         } catch (NumberFormatException e) {
+            var number = withoutUnderscores(in.charAt(from) == '+' ? from + 1 : from, to);
             throw Cursor.error(start, "the integer " + number + " does not fit in 64 bits", e);
         }
     }
 
-    /** Reads digits, which can be separated by single underscores, and returns them without the underscores. */
-    private String digits(int radix, String description) {
+    /** Moves over digits, which can be separated by single underscores, and returns whether there was an underscore. */
+    private boolean digits(int radix, String description) {
         if (in.atEnd() || digit(in.peek(), radix) < 0) {
             throw in.expected(description);
         }
-        var digits = new StringBuilder().append(in.advance());
-        while (!in.atEnd() && (in.isAt('_') || digit(in.peek(), radix) >= 0)) {
-            if (in.match('_') && (in.atEnd() || digit(in.peek(), radix) < 0)) {
-                throw in.error("an underscore must be between two digits");
+        in.skip(1);
+        var underscores = false;
+        while (!in.atEnd()) {
+            if (in.isAt('_')) {
+                in.skip(1);
+                if (in.atEnd() || digit(in.peek(), radix) < 0) {
+                    throw in.error("an underscore must be between two digits");
+                }
+                underscores = true;
+            } else if (digit(in.peek(), radix) < 0) {
+                break;
             }
-            digits.append(in.advance());
+            in.skip(1);
         }
-        return digits.toString();
+        return underscores;
+    }
+
+    /** Returns the text from {@code from} to {@code to}, a number, without the underscores between its digits. */
+    private String withoutUnderscores(int from, int to) {
+        var number = new StringBuilder(to - from);
+        for (var i = from; i < to; i++) {
+            var c = in.charAt(i);
+            if (c != '_') {
+                number.append(c);
+            }
+        }
+        return number.toString();
     }
 
     /** Like {@link Character#digit(char, int)}, but only for ASCII, as TOML has no other digits. */
     private static int digit(char c, int radix) {
+        if (radix == DECIMAL_RADIX) {
+            return Cursor.isDigit(c) ? c - '0' : -1;
+        }
         return c <= '\u007F' ? Character.digit(c, radix) : -1;
     }
 
@@ -435,12 +473,19 @@ final class Parser {
         if (!in.isDigitAt(0)) {
             throw in.expected("a digit of the fraction of a second");
         }
-        var digits = new StringBuilder();
+        var nanosecond = 0;
+        var digits = 0;
         while (in.isDigitAt(0)) {
-            digits.append(in.advance());
+            var digit = in.advance() - '0';
+            if (digits < NANOSECOND_DIGITS) {
+                nanosecond = nanosecond * DECIMAL_RADIX + digit;
+                digits++;
+            }
         }
-        digits.append("0".repeat(NANOSECOND_DIGITS));
-        return Integer.parseInt(digits, 0, NANOSECOND_DIGITS, DECIMAL_RADIX);
+        for (; digits < NANOSECOND_DIGITS; digits++) {
+            nanosecond *= DECIMAL_RADIX;
+        }
+        return nanosecond;
     }
 
     private ZoneOffset offset() {
@@ -475,16 +520,24 @@ final class Parser {
             in.advance();
             return multilineString(quote);
         }
+        var basic = quote == '"';
+        var from = in.position();
+        var to = in.skipText(quote, basic);
+        if (in.match(quote)) {
+            return in.text(from, to);
+        }
         var string = new StringBuilder();
+        in.appendTo(string, from, to);
         while (!in.match(quote)) {
             if (in.atEnd() || in.isAt('\n') || in.isAt('\r')) {
                 throw in.expected(quote + " to close the string");
             }
-            if (quote == '"' && in.match('\\')) {
-                escape(string);
-            } else {
-                string.append(content());
+            if (!basic || !in.match('\\')) {
+                throw controlCharacter();
             }
+            escape(string);
+            from = in.position();
+            in.appendTo(string, from, in.skipText(quote, basic));
         }
         return string.toString();
     }
@@ -494,7 +547,10 @@ final class Parser {
         if (in.isAt('\n') || in.isAt('\r')) {
             newline();
         }
+        var basic = quote == '"';
         while (true) {
+            var from = in.position();
+            in.appendTo(string, from, in.skipText(quote, basic));
             if (in.atEnd()) {
                 throw in.expected(String.valueOf(quote).repeat(MULTILINE_DELIMITER_LENGTH) + " to close the string");
             }
@@ -502,7 +558,7 @@ final class Parser {
                 if (quoteRun(string, quote)) {
                     return string.toString();
                 }
-            } else if (quote == '"' && in.match('\\')) {
+            } else if (basic && in.match('\\')) {
                 if (!skipLineEndingBackslash()) {
                     escape(string);
                 }
@@ -510,7 +566,7 @@ final class Parser {
                 newline();
                 string.append('\n');
             } else {
-                string.append(content());
+                throw controlCharacter();
             }
         }
     }
@@ -587,13 +643,11 @@ final class Parser {
         return (int) codePoint;
     }
 
-    /** Reads a character of a string or a comment, which cannot be a control character other than tab. */
-    private char content() {
-        var c = in.peek();
-        if ((c < ' ' && c != '\t') || c == '\u007F') {
-            throw in.error("the control character U+" + Requirements.hex(c) + " is not allowed here");
-        }
-        return in.advance();
+    /**
+     * An error at the control character where {@link Cursor#skipText(char, boolean)} stopped in a string or a comment.
+     */
+    private TomlParseException controlCharacter() {
+        return in.error("the control character U+" + Requirements.hex(in.peek()) + " is not allowed here");
     }
 
     // Whitespace, comments and newlines
@@ -630,8 +684,10 @@ final class Parser {
 
     private void comment() {
         in.expect('#');
-        while (!in.atEnd() && !in.isAt('\n') && !in.isAt('\r')) {
-            content();
+        // Nothing but a newline, a control character where skipText stops anyway, ends a comment.
+        in.skipText('\n', false);
+        if (!in.atEnd() && !in.isAt('\n') && !in.isAt('\r')) {
+            throw controlCharacter();
         }
     }
 
@@ -643,7 +699,7 @@ final class Parser {
     }
 
     private static TomlTable freeze(TableNode node) {
-        var entries = LinkedHashMap.<String, TomlValue>newLinkedHashMap(node.entries.size());
+        var entries = new ParsedEntries(node.entries.size());
         node.entries.forEach((key, value) -> entries.put(key, freeze(value)));
         return new TomlTable(entries);
     }
@@ -651,9 +707,13 @@ final class Parser {
     private static TomlValue freeze(Node node) {
         return switch (node) {
             case TableNode table -> freeze(table);
-            case ArrayOfTables array ->
-                new TomlArray(
-                        array.elements().stream().<TomlValue>map(Parser::freeze).toList());
+            case ArrayOfTables array -> {
+                var elements = new ArrayList<TomlValue>(array.size());
+                for (var element : array.elements()) {
+                    elements.add(freeze(element));
+                }
+                yield new TomlArray(elements);
+            }
             case Leaf leaf -> leaf.value();
         };
     }

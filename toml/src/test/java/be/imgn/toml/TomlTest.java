@@ -125,6 +125,13 @@ class TomlTest {
     }
 
     @Test
+    void parsesUtf8ByteSourceHoldingTheReplacementCharacter() throws IOException {
+        var source = ByteSource.wrap("x = \"�\"".getBytes(UTF_8));
+
+        assertThat(Toml.parse(source).root().getString("x")).isEqualTo("�");
+    }
+
+    @Test
     void rejectsInvalidUtf8WithItsPosition() {
         var source = ByteSource.wrap(new byte[] {'a', '=', '1', '\n', 'b', '=', '"', (byte) 0xFF, '"'});
 
@@ -150,6 +157,57 @@ class TomlTest {
         assertParseError("x = \"a\u0001\"", "line 1, column 7: the control character U+0001 is not allowed here");
         assertParseError("x = 1\ry = 2", "line 1, column 7: a carriage return must be followed by a line feed");
         assertParseError("x = 1 y = 2", "line 1, column 7: expected a newline after the statement but found 'y'");
+    }
+
+    @Test
+    void parsesNumbersWithUnderscoresAndSigns() {
+        var root = Toml.parse("""
+                a = -9_223_372_036_854_775_808
+                b = +1_000
+                c = 1_0.2_5e+1_0
+                d = 0xdead_BEEF
+                e = -0.0
+                f = 00:00:00.1234567899
+                """).root();
+
+        assertThat(root.getLong("a")).isEqualTo(Long.MIN_VALUE);
+        assertThat(root.getLong("b")).isEqualTo(1000);
+        assertThat(root.getDouble("c")).isEqualTo(10.25e10);
+        assertThat(root.getLong("d")).isEqualTo(0xdeadbeefL);
+        assertThat(root.getDouble("e")).isEqualTo(-0.0);
+        assertThat(root.get("f")).contains(new TomlLocalTime(LocalTime.of(0, 0, 0, 123_456_789)));
+    }
+
+    @Test
+    void rejectsNumbersOutOfRangeOrWithLeadingZeros() {
+        assertParseError(
+                "x = +9_223_372_036_854_775_808",
+                "line 1, column 5: the integer 9223372036854775808 does not fit in 64 bits");
+        assertParseError("x = 0_1", "line 1, column 5: a number cannot have leading zeros");
+        assertParseError("x = 1__0", "line 1, column 7: an underscore must be between two digits");
+        assertParseError("x = 1.5_", "line 1, column 9: an underscore must be between two digits");
+    }
+
+    @Test
+    void rejectsUnpairedSurrogates() {
+        var message = "the unpaired surrogate U+%04X is not allowed";
+        assertParseError("x = \"a\uD800b\"", "line 1, column 7: " + message.formatted(0xD800));
+        assertParseError("x = 'a\uDC00'", "line 1, column 7: " + message.formatted(0xDC00));
+        assertParseError("x = \"\"\"\na\uD800\"\"\"", "line 2, column 2: " + message.formatted(0xD800));
+        assertParseError("x = '''\na\uDC00'''", "line 2, column 2: " + message.formatted(0xDC00));
+        assertParseError("\"a\uD800\" = 1", "line 1, column 3: " + message.formatted(0xD800));
+        assertParseError("x = {'\uDC00' = 1}", "line 1, column 7: " + message.formatted(0xDC00));
+        assertParseError("x = 1 # a\uD800", "line 1, column 10: " + message.formatted(0xD800));
+        assertParseError("# \uD800𐀀", "line 1, column 3: " + message.formatted(0xD800));
+        assertParseError("# \uDC00\uD800", "line 1, column 3: " + message.formatted(0xDC00));
+    }
+
+    @Test
+    void acceptsSurrogatePairs() {
+        var document = Toml.parse("\"😀\" = \"😀\" # 😀\ny = '''😀'''");
+
+        assertThat(document.root().entries()).containsEntry("😀", new TomlString("😀"));
+        assertThat(document.root().getString("y")).isEqualTo("😀");
     }
 
     @Test

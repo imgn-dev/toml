@@ -35,13 +35,19 @@ public record TomlTable(Map<String, TomlValue> entries) implements TomlValue {
      */
     public TomlTable {
         requireNonNull(entries, "entries");
+        // The parser's entries are checked already, and nothing else holds them.
+        entries = Collections.unmodifiableSequencedMap(
+                entries instanceof ParsedEntries parsed ? parsed : checkedCopy(entries));
+    }
+
+    private static LinkedHashMap<String, TomlValue> checkedCopy(Map<String, TomlValue> entries) {
         var copy = LinkedHashMap.<String, TomlValue>newLinkedHashMap(entries.size());
         entries.forEach((key, value) -> {
             requireNonNull(key, "entries cannot contain a null key");
             Requirements.requireScalarValues(key, "a key");
             copy.put(key, requireNonNull(value, () -> "entries cannot contain a null value, as for the key " + key));
         });
-        entries = Collections.unmodifiableSequencedMap(copy);
+        return copy;
     }
 
     /**

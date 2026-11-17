@@ -13,6 +13,14 @@ final class Requirements {
     private Requirements() {}
 
     static void requireScalarValues(String text, String description) {
+        // Most text has no surrogate at all, which a loop over its chars finds faster than over its code points.
+        var i = 0;
+        while (i < text.length() && !Character.isSurrogate(text.charAt(i))) {
+            i++;
+        }
+        if (i == text.length()) {
+            return;
+        }
         var surrogate = text.codePoints().filter(Requirements::isSurrogate).findFirst();
         checkArgument(
                 surrogate.isEmpty(),

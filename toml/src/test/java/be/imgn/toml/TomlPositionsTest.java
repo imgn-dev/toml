@@ -71,6 +71,20 @@ class TomlPositionsTest {
     }
 
     @Test
+    void countsColumnsFromTheLineAfterMultiLineStringsAndComments() {
+        var document = Toml.parse("a = \"\"\"\none \\\n  two\"\"\"  # é\r\nb = [1_000, 'x']\nc = { d = 2.5e3 }\n");
+        var root = document.root();
+        var positions = document.positions();
+
+        assertThat(positions.value(root, "a")).isEqualTo(new TomlPosition(1, 5));
+        assertThat(positions.key(root, "b")).isEqualTo(new TomlPosition(4, 1));
+        assertThat(positions.element(root.getArray("b"), 0)).isEqualTo(new TomlPosition(4, 6));
+        assertThat(positions.element(root.getArray("b"), 1)).isEqualTo(new TomlPosition(4, 13));
+        assertThat(positions.key(root.getTable("c"), "d")).isEqualTo(new TomlPosition(5, 7));
+        assertThat(positions.value(root.getTable("c"), "d")).isEqualTo(new TomlPosition(5, 11));
+    }
+
+    @Test
     void locatesElementsOfArray() {
         var save = root.getTable("commands.save");
         var keys = save.getArray("keys");

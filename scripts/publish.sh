@@ -8,7 +8,8 @@
 #   be.imgn.toml:toml             the parser, writer and binding runtime
 #   be.imgn.toml:toml-processor   the annotation processor that generates binders
 #
-# The docs module, the guide, is built but neither installed nor deployed.
+# The benchmarks and the docs module, the guide, are built but neither installed
+# nor deployed.
 #
 # Safe to re-run: every step detects what is already done and skips it. Nothing
 # becomes public until you press Publish in the Central portal, which this
@@ -119,7 +120,7 @@ portal_contents() {
     info "Expect ONE deployment, be.imgn.toml:$RELEASE_VERSION, holding three components:"
     info '  toml-parent                 pom only'
     info '  toml, toml-processor        jar, sources, javadoc'
-    info 'No toml-docs: the guide is never deployed.'
+    info 'No toml-benchmarks or toml-docs: the benchmarks and the guide are never deployed.'
 }
 
 # --- steps --------------------------------------------------------------------

@@ -38,6 +38,8 @@ import java.nio.file.Path;
  */
 public final class Toml {
 
+    private static final char REPLACEMENT_CHARACTER = '�';
+
     private Toml() {}
 
     /**
@@ -304,6 +306,12 @@ public final class Toml {
     }
 
     private static String decode(byte[] bytes) {
+        // new String is the fastest decoder, but replaces malformed input with U+FFFD, which valid input can also hold:
+        // only input without U+FFFD is decoded once.
+        var text = new String(bytes, UTF_8);
+        if (text.indexOf(REPLACEMENT_CHARACTER) < 0) {
+            return text;
+        }
         // Decoding into a buffer, rather than with new String, tells where the malformed input is.
         var decoded = CharBuffer.allocate(bytes.length);
         var result = UTF_8.newDecoder().decode(ByteBuffer.wrap(bytes), decoded, true);

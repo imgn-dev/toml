@@ -49,6 +49,9 @@ final class Emitter {
 
     /** Returns a key as a document writes it: bare if it can be, quoted otherwise. */
     static String formatKey(String key) {
+        if (isBareKey(key)) {
+            return key;
+        }
         var out = new StringBuilder();
         try {
             new Emitter(out).key(key);
@@ -177,7 +180,7 @@ final class Emitter {
     }
 
     private void key(String key) throws IOException {
-        if (!key.isEmpty() && key.chars().allMatch(Emitter::isBareKeyChar)) {
+        if (isBareKey(key)) {
             out.append(key);
         } else {
             string(key);
@@ -227,8 +230,16 @@ final class Emitter {
                         && values.stream().allMatch(TomlTable.class::isInstance));
     }
 
-    private static boolean isBareKeyChar(int c) {
-        return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_' || c == '-';
+    private static boolean isBareKey(String key) {
+        if (key.isEmpty()) {
+            return false;
+        }
+        for (var i = 0; i < key.length(); i++) {
+            if (!Cursor.isBareKeyChar(key.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static List<String> append(List<String> path, String key) {

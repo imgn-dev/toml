@@ -250,7 +250,7 @@ build() {
     # On any failure from here on, put the version back.
     trap 'warn "Failed: restoring the version."; restore_version' ERR
 
-    info 'Verifying: every module, the docs module included'
+    info 'Verifying: every module, the benchmarks and the docs module included'
     "${MVN[@]}" clean verify
 
     if [[ $DRY_RUN == yes ]]; then
