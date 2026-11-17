@@ -7,6 +7,10 @@ package be.imgn.toml;
 /// starts, and a column is the distance from there, computed when a position is asked for.
 final class Cursor {
 
+    private static final int DECIMAL_RADIX = 10;
+    // Any decimal integer of up to 18 digits fits in a long.
+    private static final int MAX_SAFE_DECIMAL_DIGITS = 18;
+
     private final String text;
     private final char[] chars;
     private int position;
@@ -100,9 +104,23 @@ final class Cursor {
         return text.substring(from, to);
     }
 
-    /// Parses the text from `from` to `to`, as [Long#parseLong(CharSequence, int, int, int)] does.
+    /// Parses the text from `from` to `to`, as [Long#parseLong(CharSequence, int, int, int)] does. The text must
+    /// be digits in `radix` after an optional sign, as the parser has already checked.
     long parseLong(int from, int to, int radix) {
-        return Long.parseLong(text, from, to, radix);
+        var i = from;
+        var negative = chars[i] == '-';
+        if (negative || chars[i] == '+') {
+            i++;
+        }
+        // A decimal integer that short needs neither the digit nor the overflow checks Long.parseLong makes.
+        if (radix != DECIMAL_RADIX || i == to || to - i > MAX_SAFE_DECIMAL_DIGITS) {
+            return Long.parseLong(text, from, to, radix);
+        }
+        var value = 0L;
+        for (; i < to; i++) {
+            value = value * DECIMAL_RADIX + (chars[i] - '0');
+        }
+        return negative ? -value : value;
     }
 
     /// Appends the text from `from` to `to` to `builder`.

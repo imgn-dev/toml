@@ -2,6 +2,7 @@ package be.imgn.toml;
 
 import static be.imgn.toml.Nulls.nullOf;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
@@ -23,6 +24,16 @@ class TomlValueTest {
                 .isThrownBy(() -> new TomlString("a\uDC00b"))
                 .withMessage("a string cannot contain the unpaired surrogate U+DC00");
         assertThatIllegalArgumentException().isThrownBy(() -> new TomlString("\uD800"));
+    }
+
+    @Test
+    void stringRejectsUnpairedSurrogateAfterParsing() {
+        assertThatExceptionOfType(TomlParseException.class).isThrownBy(() -> Toml.parse("x = \"\uD800\""));
+        Toml.parse("x = \"a\"");
+
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> new TomlString("\uD800"))
+                .withMessage("a string cannot contain the unpaired surrogate U+D800");
     }
 
     @Test

@@ -15,6 +15,8 @@ public record TomlString(String value) implements TomlValue {
     /// @throws IllegalArgumentException if `value` contains an unpaired surrogate
     public TomlString {
         requireNonNull(value, "value");
-        Requirements.requireScalarValues(value, "a string");
+        if (!Parser.scannedStrings()) {
+            Requirements.requireScalarValues(value, "a string");
+        }
     }
 }

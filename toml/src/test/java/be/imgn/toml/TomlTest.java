@@ -27,7 +27,9 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.SplittableRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -186,6 +188,56 @@ class TomlTest {
         assertParseError("x = 0_1", "line 1, column 5: a number cannot have leading zeros");
         assertParseError("x = 1__0", "line 1, column 7: an underscore must be between two digits");
         assertParseError("x = 1.5_", "line 1, column 9: an underscore must be between two digits");
+    }
+
+    @Test
+    void parsesDecimalIntegersOfEveryLength() {
+        var integers = new ArrayList<String>();
+        for (var digits = 1; digits <= 19; digits++) {
+            // 19 nines are past the range of a long, but not an 8 followed by 18 nines.
+            var nines = digits == 19 ? "8" + "9".repeat(18) : "9".repeat(digits);
+            var one = "1" + "0".repeat(digits - 1);
+            for (var integer : List.of(nines, one)) {
+                integers.add(integer);
+                integers.add("+" + integer);
+                integers.add("-" + integer);
+            }
+        }
+        integers.addAll(
+                List.of("0", "+0", "-0", "9223372036854775807", "-9223372036854775808", "+9223372036854775807"));
+        var random = new SplittableRandom(42);
+        for (var i = 0; i < 10_000; i++) {
+            integers.add(Long.toString(random.nextLong() >> random.nextInt(64)));
+        }
+
+        for (var integer : integers) {
+            var expected = Long.parseLong(integer);
+            assertThat(Toml.parse("x = " + integer).root().getLong("x"))
+                    .as(integer)
+                    .isEqualTo(expected);
+            var grouped = integer.replaceAll("(\\d)(?=(\\d{3})+$)", "$1_");
+            assertThat(Toml.parse("x = " + grouped).root().getLong("x"))
+                    .as(grouped)
+                    .isEqualTo(expected);
+        }
+    }
+
+    @Test
+    void rejectsDecimalIntegersPastLongRange() {
+        assertParseError(
+                "x = 9223372036854775808", "line 1, column 5: the integer 9223372036854775808 does not fit in 64 bits");
+        assertParseError(
+                "x = -9223372036854775809",
+                "line 1, column 5: the integer -9223372036854775809 does not fit in 64 bits");
+        assertParseError(
+                "x = 10000000000000000000",
+                "line 1, column 5: the integer 10000000000000000000 does not fit in 64 bits");
+        assertParseError(
+                "x = -99999999999999999999",
+                "line 1, column 5: the integer -99999999999999999999 does not fit in 64 bits");
+        assertParseError("x = 00", "line 1, column 5: a number cannot have leading zeros");
+        assertParseError("x = -01", "line 1, column 5: a number cannot have leading zeros");
+        assertParseError("x = +", "line 1, column 6: expected a number but found end of input");
     }
 
     @Test

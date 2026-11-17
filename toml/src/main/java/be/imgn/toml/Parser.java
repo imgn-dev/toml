@@ -27,6 +27,8 @@ import org.jspecify.annotations.Nullable;
 final class Parser {
 
     private static final char BYTE_ORDER_MARK = '﻿';
+    // Bound while the parser runs: see scannedStrings().
+    private static final ScopedValue<Boolean> SCANNED_STRINGS = ScopedValue.newInstance();
     private static final int DECIMAL_RADIX = 10;
     private static final int HEXADECIMAL_RADIX = 16;
     private static final int OCTAL_RADIX = 8;
@@ -56,7 +58,14 @@ final class Parser {
 
     static TomlDocument parse(String document) {
         var text = !document.isEmpty() && document.charAt(0) == BYTE_ORDER_MARK ? document.substring(1) : document;
-        return new Parser(text).document();
+        return ScopedValue.where(SCANNED_STRINGS, Boolean.TRUE).call(() -> new Parser(text).document());
+    }
+
+    /// Whether the strings created now are ones the parser has scanned for unpaired surrogates already, so that
+    /// [TomlString] need not check them again. It is so only while the parser runs, on its own thread, and the
+    /// parser runs no code but this module's and the JDK's.
+    static boolean scannedStrings() {
+        return SCANNED_STRINGS.isBound();
     }
 
     /// Parses a dotted key as written in a document, such as `a."b.c"`, into its parts.
