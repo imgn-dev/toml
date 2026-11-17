@@ -15,101 +15,89 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.file.Path;
 
-/**
- * Parses and writes <a href="https://toml.io/en/v1.1.0">TOML 1.1</a> documents.
- *
- * <pre>{@code
- * TomlTable config = Toml.parse(file).root();
- * int port = config.getInt("server.port");
- *
- * Toml.write(config, CharSink.of(file, StandardCharsets.UTF_8));
- * }</pre>
- *
- * <p>The parser accepts every valid TOML 1.1 document, and rejects every invalid one with a {@link TomlParseException}.
- * A document may start with a byte order mark, which is ignored. A parsed {@link TomlDocument} also tells where each of
- * its keys and values is written, through its {@link TomlPositions}.
- *
- * <p>The writer writes the entries of a table before its subtables, and keeps the order of each. It writes nothing but
- * the data: comments, blank lines and the choice between equivalent notations, such as a literal string or a dotted
- * key, are not kept from a parsed document. It writes newlines as {@code \n}, and only TOML 1.0 notation, so that TOML
- * 1.0 parsers can read what it writes too.
- *
- * @since 0.1.0
- */
+/// Parses and writes [TOML 1.1](https://toml.io/en/v1.1.0) documents.
+///
+/// ```java
+/// TomlTable config = Toml.parse(file).root();
+/// int port = config.getInt("server.port");
+///
+/// Toml.write(config, CharSink.of(file, StandardCharsets.UTF_8));
+/// ```
+///
+/// The parser accepts every valid TOML 1.1 document, and rejects every invalid one with a [TomlParseException].
+/// A document may start with a byte order mark, which is ignored. A parsed [TomlDocument] also tells where each
+/// of its keys and values is written, through its [TomlPositions].
+///
+/// The writer writes the entries of a table before its subtables, and keeps the order of each. It writes
+/// nothing but the data: comments, blank lines and the choice between equivalent notations, such as a literal
+/// string or a dotted key, are not kept from a parsed document. It writes newlines as `\n`, and only TOML 1.0
+/// notation, so that TOML 1.0 parsers can read what it writes too.
+///
+/// @since 0.1.0
 public final class Toml {
 
     private static final char REPLACEMENT_CHARACTER = '�';
 
     private Toml() {}
 
-    /**
-     * Parses a document.
-     *
-     * @param document the document
-     * @return the parsed {@code document}
-     * @throws TomlParseException if {@code document} is not valid TOML
-     * @throws NullPointerException if {@code document} is null
-     */
+    /// Parses a document.
+    ///
+    /// @param document the document
+    /// @return the parsed `document`
+    /// @throws TomlParseException if `document` is not valid TOML
+    /// @throws NullPointerException if `document` is null
     public static TomlDocument parse(String document) {
         requireNonNull(document, "document");
         return Parser.parse(document);
     }
 
-    /**
-     * Parses a document read from a source of characters.
-     *
-     * @param source the source of the document
-     * @return the parsed document
-     * @throws IOException if reading {@code source} fails
-     * @throws TomlParseException if the document is not valid TOML
-     * @throws NullPointerException if {@code source} is null
-     */
+    /// Parses a document read from a source of characters.
+    ///
+    /// @param source the source of the document
+    /// @return the parsed document
+    /// @throws IOException if reading `source` fails
+    /// @throws TomlParseException if the document is not valid TOML
+    /// @throws NullPointerException if `source` is null
     public static TomlDocument parse(CharSource source) throws IOException {
         requireNonNull(source, "source");
         return parse(source.read());
     }
 
-    /**
-     * Parses a document read from a source of bytes, which must be UTF-8, as TOML requires.
-     *
-     * @param source the source of the document
-     * @return the parsed document
-     * @throws IOException if reading {@code source} fails
-     * @throws TomlParseException if the document is not valid UTF-8, or not valid TOML
-     * @throws NullPointerException if {@code source} is null
-     */
+    /// Parses a document read from a source of bytes, which must be UTF-8, as TOML requires.
+    ///
+    /// @param source the source of the document
+    /// @return the parsed document
+    /// @throws IOException if reading `source` fails
+    /// @throws TomlParseException if the document is not valid UTF-8, or not valid TOML
+    /// @throws NullPointerException if `source` is null
     public static TomlDocument parse(ByteSource source) throws IOException {
         requireNonNull(source, "source");
         return parse(decode(source.read()));
     }
 
-    /**
-     * Parses a document read from a file, which must be UTF-8, as TOML requires.
-     *
-     * @param file the file of the document
-     * @return the parsed document
-     * @throws IOException if reading {@code file} fails
-     * @throws TomlParseException if the document is not valid UTF-8, or not valid TOML
-     * @throws NullPointerException if {@code file} is null
-     */
+    /// Parses a document read from a file, which must be UTF-8, as TOML requires.
+    ///
+    /// @param file the file of the document
+    /// @return the parsed document
+    /// @throws IOException if reading `file` fails
+    /// @throws TomlParseException if the document is not valid UTF-8, or not valid TOML
+    /// @throws NullPointerException if `file` is null
     public static TomlDocument parse(Path file) throws IOException {
         requireNonNull(file, "file");
         return parse(ByteSource.of(file));
     }
 
-    /**
-     * Parses a document, and binds it to a {@link TomlConfig} record.
-     *
-     * @param <T> the type of the record
-     * @param document the document
-     * @param type the type of the record
-     * @return the record
-     * @throws TomlParseException if {@code document} is not valid TOML
-     * @throws TomlMappingException if the document does not bind to the record
-     * @throws IllegalArgumentException if no {@link TomlBinder} is registered for {@code type}
-     * @throws NullPointerException if an argument is null
-     * @since 0.1.0
-     */
+    /// Parses a document, and binds it to a [TomlConfig] record.
+    ///
+    /// @param <T> the type of the record
+    /// @param document the document
+    /// @param type the type of the record
+    /// @return the record
+    /// @throws TomlParseException if `document` is not valid TOML
+    /// @throws TomlMappingException if the document does not bind to the record
+    /// @throws IllegalArgumentException if no [TomlBinder] is registered for `type`
+    /// @throws NullPointerException if an argument is null
+    /// @since 0.1.0
     public static <T> T parse(String document, Class<T> type) {
         requireNonNull(document, "document");
         requireNonNull(type, "type");
@@ -117,20 +105,18 @@ public final class Toml {
         return bind(binder, parse(document).root(), type, UnknownKeys.REJECT);
     }
 
-    /**
-     * Parses a document read from a source of characters, and binds it to a {@link TomlConfig} record.
-     *
-     * @param <T> the type of the record
-     * @param source the source of the document
-     * @param type the type of the record
-     * @return the record
-     * @throws IOException if reading {@code source} fails
-     * @throws TomlParseException if the document is not valid TOML
-     * @throws TomlMappingException if the document does not bind to the record
-     * @throws IllegalArgumentException if no {@link TomlBinder} is registered for {@code type}
-     * @throws NullPointerException if an argument is null
-     * @since 0.1.0
-     */
+    /// Parses a document read from a source of characters, and binds it to a [TomlConfig] record.
+    ///
+    /// @param <T> the type of the record
+    /// @param source the source of the document
+    /// @param type the type of the record
+    /// @return the record
+    /// @throws IOException if reading `source` fails
+    /// @throws TomlParseException if the document is not valid TOML
+    /// @throws TomlMappingException if the document does not bind to the record
+    /// @throws IllegalArgumentException if no [TomlBinder] is registered for `type`
+    /// @throws NullPointerException if an argument is null
+    /// @since 0.1.0
     public static <T> T parse(CharSource source, Class<T> type) throws IOException {
         requireNonNull(source, "source");
         requireNonNull(type, "type");
@@ -138,21 +124,19 @@ public final class Toml {
         return bind(binder, parse(source).root(), type, UnknownKeys.REJECT);
     }
 
-    /**
-     * Parses a document read from a source of bytes, which must be UTF-8, as TOML requires, and binds it to a
-     * {@link TomlConfig} record.
-     *
-     * @param <T> the type of the record
-     * @param source the source of the document
-     * @param type the type of the record
-     * @return the record
-     * @throws IOException if reading {@code source} fails
-     * @throws TomlParseException if the document is not valid UTF-8, or not valid TOML
-     * @throws TomlMappingException if the document does not bind to the record
-     * @throws IllegalArgumentException if no {@link TomlBinder} is registered for {@code type}
-     * @throws NullPointerException if an argument is null
-     * @since 0.1.0
-     */
+    /// Parses a document read from a source of bytes, which must be UTF-8, as TOML requires, and binds it to a
+    /// [TomlConfig] record.
+    ///
+    /// @param <T> the type of the record
+    /// @param source the source of the document
+    /// @param type the type of the record
+    /// @return the record
+    /// @throws IOException if reading `source` fails
+    /// @throws TomlParseException if the document is not valid UTF-8, or not valid TOML
+    /// @throws TomlMappingException if the document does not bind to the record
+    /// @throws IllegalArgumentException if no [TomlBinder] is registered for `type`
+    /// @throws NullPointerException if an argument is null
+    /// @since 0.1.0
     public static <T> T parse(ByteSource source, Class<T> type) throws IOException {
         requireNonNull(source, "source");
         requireNonNull(type, "type");
@@ -160,55 +144,49 @@ public final class Toml {
         return bind(binder, parse(source).root(), type, UnknownKeys.REJECT);
     }
 
-    /**
-     * Parses a document read from a file, which must be UTF-8, as TOML requires, and binds it to a {@link TomlConfig}
-     * record.
-     *
-     * @param <T> the type of the record
-     * @param file the file of the document
-     * @param type the type of the record
-     * @return the record
-     * @throws IOException if reading {@code file} fails
-     * @throws TomlParseException if the document is not valid UTF-8, or not valid TOML
-     * @throws TomlMappingException if the document does not bind to the record
-     * @throws IllegalArgumentException if no {@link TomlBinder} is registered for {@code type}
-     * @throws NullPointerException if an argument is null
-     */
+    /// Parses a document read from a file, which must be UTF-8, as TOML requires, and binds it to a
+    /// [TomlConfig] record.
+    ///
+    /// @param <T> the type of the record
+    /// @param file the file of the document
+    /// @param type the type of the record
+    /// @return the record
+    /// @throws IOException if reading `file` fails
+    /// @throws TomlParseException if the document is not valid UTF-8, or not valid TOML
+    /// @throws TomlMappingException if the document does not bind to the record
+    /// @throws IllegalArgumentException if no [TomlBinder] is registered for `type`
+    /// @throws NullPointerException if an argument is null
     public static <T> T parse(Path file, Class<T> type) throws IOException {
         requireNonNull(file, "file");
         requireNonNull(type, "type");
         return parse(ByteSource.of(file), type);
     }
 
-    /**
-     * Binds a table to a {@link TomlConfig} record, as {@link #parse(String, Class)} binds a parsed document: a key
-     * that no component takes is an error.
-     *
-     * @param <T> the type of the record
-     * @param table the table
-     * @param type the type of the record
-     * @return the record
-     * @throws TomlMappingException if {@code table} does not bind to the record
-     * @throws IllegalArgumentException if no {@link TomlBinder} is registered for {@code type}
-     * @throws NullPointerException if an argument is null
-     */
+    /// Binds a table to a [TomlConfig] record, as [#parse(String, Class)] binds a parsed document: a key
+    /// that no component takes is an error.
+    ///
+    /// @param <T> the type of the record
+    /// @param table the table
+    /// @param type the type of the record
+    /// @return the record
+    /// @throws TomlMappingException if `table` does not bind to the record
+    /// @throws IllegalArgumentException if no [TomlBinder] is registered for `type`
+    /// @throws NullPointerException if an argument is null
     public static <T> T bind(TomlTable table, Class<T> type) {
         return bind(table, type, UnknownKeys.REJECT);
     }
 
-    /**
-     * Binds a table to a {@link TomlConfig} record, and to the records it refers to, doing what {@code unknownKeys}
-     * says with the keys that no component takes.
-     *
-     * @param <T> the type of the record
-     * @param table the table
-     * @param type the type of the record
-     * @param unknownKeys what to do with a key that no component takes
-     * @return the record
-     * @throws TomlMappingException if {@code table} does not bind to the record
-     * @throws IllegalArgumentException if no {@link TomlBinder} is registered for {@code type}
-     * @throws NullPointerException if an argument is null
-     */
+    /// Binds a table to a [TomlConfig] record, and to the records it refers to, doing what `unknownKeys`
+    /// says with the keys that no component takes.
+    ///
+    /// @param <T> the type of the record
+    /// @param table the table
+    /// @param type the type of the record
+    /// @param unknownKeys what to do with a key that no component takes
+    /// @return the record
+    /// @throws TomlMappingException if `table` does not bind to the record
+    /// @throws IllegalArgumentException if no [TomlBinder] is registered for `type`
+    /// @throws NullPointerException if an argument is null
     public static <T> T bind(TomlTable table, Class<T> type, UnknownKeys unknownKeys) {
         requireNonNull(table, "table");
         requireNonNull(type, "type");
@@ -220,20 +198,18 @@ public final class Toml {
         return type.cast(binder.bind(table, unknownKeys));
     }
 
-    /**
-     * Converts a {@link TomlConfig} record to a table, which binds back to an equal record.
-     *
-     * <p>Each component is the value of its key, in the form that {@link TomlConfig} binds: a {@code Duration} in
-     * ISO-8601, such as {@code "PT1M30S"}; a {@code Path} or a {@code URI} as its {@code toString()}; an enum as the
-     * key of its constant; a list or a set as an array, in its iteration order; a map or a record as a table. A null
-     * {@code @Nullable} component is left out.
-     *
-     * @param value the record
-     * @return the table
-     * @throws IllegalArgumentException if no {@link TomlBinder} is registered for the class of {@code value}, or if a
-     *     string in it contains an unpaired surrogate
-     * @throws NullPointerException if {@code value} is null, or a value in it that is not {@code @Nullable}
-     */
+    /// Converts a [TomlConfig] record to a table, which binds back to an equal record.
+    ///
+    /// Each component is the value of its key, in the form that [TomlConfig] binds: a `Duration` in ISO-8601,
+    /// such as `"PT1M30S"`; a `Path` or a `URI` as its `toString()`; an enum as the key of its constant; a list
+    /// or a set as an array, in its iteration order; a map or a record as a table. A null `@Nullable` component
+    /// is left out.
+    ///
+    /// @param value the record
+    /// @return the table
+    /// @throws IllegalArgumentException if no [TomlBinder] is registered for the class of `value`, or if a
+    ///     string in it contains an unpaired surrogate
+    /// @throws NullPointerException if `value` is null, or a value in it that is not `@Nullable`
     public static TomlTable toTable(Record value) {
         requireNonNull(value, "value");
         return toTable(Binders.of(value.getClass()), value);
@@ -243,26 +219,22 @@ public final class Toml {
         return binder.toTable(binder.type().cast(value));
     }
 
-    /**
-     * Formats a table as a document.
-     *
-     * @param table the root table of the document
-     * @return the document
-     * @throws NullPointerException if {@code table} is null
-     */
+    /// Formats a table as a document.
+    ///
+    /// @param table the root table of the document
+    /// @return the document
+    /// @throws NullPointerException if `table` is null
     public static String format(TomlTable table) {
         requireNonNull(table, "table");
         return Emitter.format(table);
     }
 
-    /**
-     * Writes a table as a document to a sink of characters.
-     *
-     * @param table the root table of the document
-     * @param sink where to write the document
-     * @throws IOException if writing to {@code sink} fails
-     * @throws NullPointerException if {@code table} or {@code sink} is null
-     */
+    /// Writes a table as a document to a sink of characters.
+    ///
+    /// @param table the root table of the document
+    /// @param sink where to write the document
+    /// @throws IOException if writing to `sink` fails
+    /// @throws NullPointerException if `table` or `sink` is null
     public static void write(TomlTable table, CharSink sink) throws IOException {
         requireNonNull(table, "table");
         requireNonNull(sink, "sink");
@@ -271,30 +243,27 @@ public final class Toml {
         }
     }
 
-    /**
-     * Writes a table as a UTF-8 document to a sink of bytes.
-     *
-     * @param table the root table of the document
-     * @param sink where to write the document
-     * @throws IOException if writing to {@code sink} fails
-     * @throws NullPointerException if {@code table} or {@code sink} is null
-     */
+    /// Writes a table as a UTF-8 document to a sink of bytes.
+    ///
+    /// @param table the root table of the document
+    /// @param sink where to write the document
+    /// @throws IOException if writing to `sink` fails
+    /// @throws NullPointerException if `table` or `sink` is null
     public static void write(TomlTable table, ByteSink sink) throws IOException {
         requireNonNull(table, "table");
         requireNonNull(sink, "sink");
         write(table, sink.asCharSink(UTF_8));
     }
 
-    /**
-     * Writes a table as a UTF-8 document to a file, atomically: readers, or the next run after a crash, see either the
-     * previous content of the file or the whole document, never a part of it. The file keeps its permissions.
-     *
-     * @param table the root table of the document
-     * @param file the file to create or replace
-     * @throws IOException if writing the file fails, which leaves it as it was
-     * @throws NullPointerException if {@code table} or {@code file} is null
-     * @see AtomicFiles#write(Path, AtomicFiles.Output)
-     */
+    /// Writes a table as a UTF-8 document to a file, atomically: readers, or the next run after a crash, see
+    /// either the previous content of the file or the whole document, never a part of it. The file keeps its
+    /// permissions.
+    ///
+    /// @param table the root table of the document
+    /// @param file the file to create or replace
+    /// @throws IOException if writing the file fails, which leaves it as it was
+    /// @throws NullPointerException if `table` or `file` is null
+    /// @see AtomicFiles#write(Path, AtomicFiles.Output)
     public static void writeAtomically(TomlTable table, Path file) throws IOException {
         requireNonNull(table, "table");
         requireNonNull(file, "file");

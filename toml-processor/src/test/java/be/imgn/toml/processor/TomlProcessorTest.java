@@ -49,11 +49,11 @@ class TomlProcessorTest {
                 import be.imgn.toml.UnknownKeys;
                 import javax.annotation.processing.Generated;
 
-                /** Binds tables to {@code Server}, and writes it to tables. */
+                /// Binds tables to `Server`, and writes it to tables.
                 @Generated("be.imgn.toml.processor.TomlProcessor")
                 public final class $Server$$TomlBinder implements TomlBinder<Server> {
 
-                    /** Creates the binder; the service loader does. */
+                    /// Creates the binder; the service loader does.
                     public $Server$$TomlBinder() {}
 
                     @Override

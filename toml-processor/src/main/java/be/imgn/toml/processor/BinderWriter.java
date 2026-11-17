@@ -14,7 +14,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/** Writes the source of a binder, after its package declaration and imports. */
+/// Writes the source of a binder, after its package declaration and imports.
 final class BinderWriter {
 
     // The TOML value that reverses each conversion of TomlBindings; those written as strings use toString().
@@ -60,11 +60,11 @@ final class BinderWriter {
                 .collect(Collectors.joining());
         var first = binder.records().getFirst();
         return """
-                /** Binds tables to {@code %1$s}, and writes it to tables. */
+                /// Binds tables to `%1$s`, and writes it to tables.
                 %2$s
                 public final class %3$s implements %4$s<%1$s> {
 
-                    /** Creates the binder; the service loader does. */
+                    /// Creates the binder; the service loader does.
                     public %3$s() {}
 
                     @Override
@@ -186,7 +186,8 @@ final class BinderWriter {
         };
     }
 
-    /** Returns a lambda that writes a value, its parameter named after its depth, so that nested lambdas differ. */
+    /// Returns a lambda that writes a value, its parameter named after its depth, so that nested lambdas
+    /// differ.
     private String writer(Conversion conversion, int depth) {
         var parameter = "e" + depth;
         var written = switch (conversion) {
@@ -209,7 +210,7 @@ final class BinderWriter {
         return parameter + " -> " + written;
     }
 
-    /** Returns a string as a Java string literal. */
+    /// Returns a string as a Java string literal.
     private static String literal(String string) {
         var literal = new StringBuilder("\"");
         string.chars().forEach(c -> {

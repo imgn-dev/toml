@@ -27,10 +27,8 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-/**
- * Loads bundles with {@link ResourceBundle#getBundle}, from an application compiled for the class path, and from one
- * compiled as a named module, whose resources the module encapsulates.
- */
+/// Loads bundles with [ResourceBundle#getBundle], from an application compiled for the class path, and from one
+/// compiled as a named module, whose resources the module encapsulates.
 class TomlResourceBundleLoadingTest {
 
     private static final String ROOT_BUNDLE = """
@@ -50,7 +48,7 @@ class TomlResourceBundleLoadingTest {
             not-found = "Aucun article {0}"
             """;
 
-    /** The modules the application compiles against: this one, and those it requires. */
+    /// The modules the application compiles against: this one, and those it requires.
     private static final List<String> MODULES =
             List.of("be.imgn.toml", "be.imgn.gaia.core", "org.jspecify", "com.google.errorprone.annotations");
 

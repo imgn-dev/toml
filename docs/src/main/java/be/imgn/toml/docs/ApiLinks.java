@@ -8,10 +8,8 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Optional;
 
-/**
- * Turns the name of a toml class into a link to its page in the API documentation, published next to the guide in
- * {@code api/latest/}.
- */
+/// Turns the name of a toml class into a link to its page in the API documentation, published next to the guide
+/// in `api/latest/`.
 final class ApiLinks {
 
     static final String SCHEME = "api:";
@@ -21,13 +19,11 @@ final class ApiLinks {
 
     private ApiLinks() {}
 
-    /**
-     * Returns the link to the API documentation of a class, named as in Java source, such as
-     * {@code be.imgn.toml.TomlValue.TomlString}.
-     *
-     * @return the link, or an empty optional if the name is not a public class of a package that a toml module exports,
-     *     the only ones the API documentation has
-     */
+    /// Returns the link to the API documentation of a class, named as in Java source, such as
+    /// `be.imgn.toml.TomlValue.TomlString`.
+    ///
+    /// @return the link, or an empty optional if the name is not a public class of a package that a toml module
+    ///     exports, the only ones the API documentation has
     static Optional<String> href(String className) {
         return load(className)
                 .filter(ApiLinks::isPublic)

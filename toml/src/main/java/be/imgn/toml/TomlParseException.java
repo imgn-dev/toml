@@ -2,13 +2,11 @@ package be.imgn.toml;
 
 import java.io.Serial;
 
-/**
- * Thrown when a document is not valid TOML.
- *
- * <p>The message starts with the line and column of the error, and states what was expected and what was found.
- *
- * @since 0.1.0
- */
+/// Thrown when a document is not valid TOML.
+///
+/// The message starts with the line and column of the error, and states what was expected and what was found.
+///
+/// @since 0.1.0
 public final class TomlParseException extends RuntimeException {
 
     @Serial
@@ -28,17 +26,15 @@ public final class TomlParseException extends RuntimeException {
         initCause(cause);
     }
 
-    /**
-     * Returns where the error is.
-     *
-     * <p>An error about a whole value, such as an integer that does not fit in 64 bits or an invalid date, is where the
-     * value starts. An error about the definition of a table, such as a table defined twice, is at the {@code [} of its
-     * header. An error about a key, such as a duplicate key, is at that key, or at the part of a dotted key it is
-     * about, inside a header too. These are the positions {@link TomlPositions} reports. Any other error is where the
-     * parser found it.
-     *
-     * @return the position of the error
-     */
+    /// Returns where the error is.
+    ///
+    /// An error about a whole value, such as an integer that does not fit in 64 bits or an invalid date, is
+    /// where the value starts. An error about the definition of a table, such as a table defined twice, is at
+    /// the `[` of its header. An error about a key, such as a duplicate key, is at that key, or at the part of
+    /// a dotted key it is about, inside a header too. These are the positions [TomlPositions] reports. Any
+    /// other error is where the parser found it.
+    ///
+    /// @return the position of the error
     public TomlPosition position() {
         return new TomlPosition(line, column);
     }

@@ -1,6 +1,4 @@
-/**
- * The generator of the guide.
- */
+/// The generator of the guide.
 @NullMarked
 package be.imgn.toml.docs;
 

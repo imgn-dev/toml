@@ -15,7 +15,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-/** Binds documents through the code the processor generates, compiled and loaded as an application would. */
+/// Binds documents through the code the processor generates, compiled and loaded as an application would.
 class BindingTest {
 
     private static final String FULL = """

@@ -38,10 +38,8 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
-/**
- * Works out the binder of a record: how each of its components converts, and the records and enums they refer to. Each
- * invalid component or constant is reported as an error.
- */
+/// Works out the binder of a record: how each of its components converts, and the records and enums they refer
+/// to. Each invalid component or constant is reported as an error.
 final class BinderAnalyzer {
 
     static final String TOML_KEY = "be.imgn.toml.TomlKey";
@@ -102,7 +100,7 @@ final class BinderAnalyzer {
         method(root);
     }
 
-    /** Works out the binder, or returns empty if an error was reported. */
+    /// Works out the binder, or returns empty if an error was reported.
     Optional<Binder> analyze() {
         var errors = context.diagnostics().errorCount();
         var records = new ArrayList<RecordMethod>();
@@ -238,7 +236,7 @@ final class BinderAnalyzer {
         }
     }
 
-    /** Returns the methods that bind and write a record or an enum, which is analyzed once. */
+    /// Returns the methods that bind and write a record or an enum, which is analyzed once.
     private Pending method(TypeElement type) {
         return methodsByType.computeIfAbsent(type.getQualifiedName().toString(), qualifiedName -> {
             var simpleName = type.getSimpleName().toString();
@@ -262,6 +260,6 @@ final class BinderAnalyzer {
                 "Cannot bind the type " + type + ": see @TomlConfig for the types it binds", component);
     }
 
-    /** A record or an enum to analyze, and the names of the methods that bind and write it. */
+    /// A record or an enum to analyze, and the names of the methods that bind and write it.
     private record Pending(TypeElement type, String name, String writer) {}
 }

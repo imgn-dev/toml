@@ -10,13 +10,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Writes a table as a TOML document, to any {@link Appendable}.
- *
- * <p>Each table is written as its entries, then its subtables. A subtable starts with a {@code [header]}, and each
- * table of an array of tables with a {@code [[header]]}, while the values inside an array or an inline table are
- * written inline. A table that has only subtables gets no header: the headers of its subtables define it.
- */
+/// Writes a table as a TOML document, to any [Appendable].
+///
+/// Each table is written as its entries, then its subtables. A subtable starts with a `[header]`, and each
+/// table of an array of tables with a `[[header]]`, while the values inside an array or an inline table are
+/// written inline. A table that has only subtables gets no header: the headers of its subtables define it.
 final class Emitter {
 
     private static final int MAX_FRACTION_DIGITS = 9;
@@ -47,7 +45,7 @@ final class Emitter {
         return out.toString();
     }
 
-    /** Returns a key as a document writes it: bare if it can be, quoted otherwise. */
+    /// Returns a key as a document writes it: bare if it can be, quoted otherwise.
     static String formatKey(String key) {
         if (isBareKey(key)) {
             return key;
@@ -61,7 +59,7 @@ final class Emitter {
         return out.toString();
     }
 
-    /** Returns a string as a document writes it, quoted. */
+    /// Returns a string as a document writes it, quoted.
     static String formatString(String string) {
         var out = new StringBuilder();
         try {
@@ -222,7 +220,7 @@ final class Emitter {
         return Double.toString(number);
     }
 
-    /** Whether a value is written as a table or an array of tables under a header, rather than inline. */
+    /// Whether a value is written as a table or an array of tables under a header, rather than inline.
     private static boolean isSection(TomlValue value) {
         return value instanceof TomlTable
                 || (value instanceof TomlArray(var values)

@@ -21,10 +21,8 @@ import org.tomlj.TomlParseResult;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.dataformat.toml.TomlMapper;
 
-/**
- * Parses a document into a tree, from a {@code String} and from UTF-8 bytes. Every library builds its whole tree, so
- * that none of them reads any value afterwards.
- */
+/// Parses a document into a tree, from a `String` and from UTF-8 bytes. Every library builds its whole tree, so
+/// that none of them reads any value afterwards.
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.Throughput)
 @OutputTimeUnit(TimeUnit.SECONDS)
@@ -35,56 +33,48 @@ public class ParseBenchmark {
 
     private static final TomlMapper JACKSON = new TomlMapper();
 
-    /** The document, as {@link Documents#get(String)} names it. */
+    /// The document, as [Documents#get(String)] names it.
     @Param({"small", "medium", "large", "numbers", "strings"})
     public String document = "";
 
     private String text = "";
     private byte[] bytes = new byte[0];
 
-    /** Generates the document. */
+    /// Generates the document.
     @Setup
     public void setUp() {
         text = Documents.get(document);
         bytes = text.getBytes(StandardCharsets.UTF_8);
     }
 
-    /**
-     * Parses the document from a {@code String}.
-     *
-     * @return the document
-     */
+    /// Parses the document from a `String`.
+    ///
+    /// @return the document
     @Benchmark
     public TomlDocument string() {
         return Toml.parse(text);
     }
 
-    /**
-     * Parses the document from UTF-8 bytes.
-     *
-     * @return the document
-     * @throws IOException never, as the bytes are in memory
-     */
+    /// Parses the document from UTF-8 bytes.
+    ///
+    /// @return the document
+    /// @throws IOException never, as the bytes are in memory
     @Benchmark
     public TomlDocument bytes() throws IOException {
         return Toml.parse(ByteSource.wrap(bytes));
     }
 
-    /**
-     * Parses the document from a {@code String} into a tomlj tree.
-     *
-     * @return the tree, with the errors tomlj found
-     */
+    /// Parses the document from a `String` into a tomlj tree.
+    ///
+    /// @return the tree, with the errors tomlj found
     @Benchmark
     public TomlParseResult tomlj() {
         return org.tomlj.Toml.parse(text);
     }
 
-    /**
-     * Parses the document from a {@code String} into a Jackson tree.
-     *
-     * @return the tree
-     */
+    /// Parses the document from a `String` into a Jackson tree.
+    ///
+    /// @return the tree
     @Benchmark
     public JsonNode jackson() {
         return JACKSON.readTree(text);

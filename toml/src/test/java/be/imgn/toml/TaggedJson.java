@@ -7,10 +7,9 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 
-/**
- * Reads the expected results of toml-test: JSON in which every scalar is an object such as {@code {"type": "integer",
- * "value": "42"}}. Only objects, arrays and strings appear in them, so nothing else is read.
- */
+/// Reads the expected results of toml-test: JSON in which every scalar is an object such as
+/// `{"type": "integer", "value": "42"}`. Only objects, arrays and strings appear in them, so nothing else is
+/// read.
 final class TaggedJson {
 
     private final String json;

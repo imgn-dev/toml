@@ -15,16 +15,15 @@ import java.util.List;
 import java.util.Map;
 import org.jspecify.annotations.Nullable;
 
-/**
- * A recursive-descent TOML 1.1 parser.
- *
- * <p>The tables a document defines with headers and dotted keys are built as a mutable tree, which records how each
- * table was defined so that the rules against redefining a table can be enforced, and which becomes {@link TomlTable}s
- * at the end. Arrays and inline tables cannot be extended once closed, so they become values right away.
- *
- * <p>The tree also records where each key and value is written, and so do the shapes it keeps of the arrays and inline
- * tables it reads: the tree and those shapes become the {@link TomlPositions} of the document.
- */
+/// A recursive-descent TOML 1.1 parser.
+///
+/// The tables a document defines with headers and dotted keys are built as a mutable tree, which records how
+/// each table was defined so that the rules against redefining a table can be enforced, and which becomes
+/// [TomlTable]s at the end. Arrays and inline tables cannot be extended once closed, so they become values
+/// right away.
+///
+/// The tree also records where each key and value is written, and so do the shapes it keeps of the arrays and
+/// inline tables it reads: the tree and those shapes become the [TomlPositions] of the document.
 final class Parser {
 
     private static final char BYTE_ORDER_MARK = '﻿';
@@ -60,7 +59,7 @@ final class Parser {
         return new Parser(text).document();
     }
 
-    /** Parses a dotted key as written in a document, such as {@code a."b.c"}, into its parts. */
+    /// Parses a dotted key as written in a document, such as `a."b.c"`, into its parts.
     static List<String> parseKey(String key) {
         var parser = new Parser(key);
         try {
@@ -332,7 +331,7 @@ final class Parser {
         }
     }
 
-    /** Reads a decimal integer or float, whose sign, if any, is at {@code from}. */
+    /// Reads a decimal integer or float, whose sign, if any, is at `from`.
     private TomlValue decimal(long start, int from) {
         var integerPart = in.position();
         var underscores = digits(DECIMAL_RADIX, "a digit");
@@ -347,10 +346,8 @@ final class Parser {
         return new TomlFloat(Double.parseDouble(underscores ? withoutUnderscores(from, to) : in.text(from, to)));
     }
 
-    /**
-     * Moves over the fraction and the exponent of a float, one of which can be missing, and returns whether there was
-     * an underscore.
-     */
+    /// Moves over the fraction and the exponent of a float, one of which can be missing, and returns whether
+    /// there was an underscore.
     private boolean fractionAndExponent() {
         var underscores = false;
         if (in.match('.')) {
@@ -365,7 +362,7 @@ final class Parser {
         return underscores;
     }
 
-    /** Parses the decimal integer that ends here, whose sign, if any, is at {@code from}. */
+    /// Parses the decimal integer that ends here, whose sign, if any, is at `from`.
     private TomlValue integer(long start, int from, boolean underscores) {
         var to = in.position();
         try {
@@ -377,7 +374,8 @@ final class Parser {
         }
     }
 
-    /** Moves over digits, which can be separated by single underscores, and returns whether there was an underscore. */
+    /// Moves over digits, which can be separated by single underscores, and returns whether there was an
+    /// underscore.
     private boolean digits(int radix, String description) {
         if (in.atEnd() || digit(in.peek(), radix) < 0) {
             throw in.expected(description);
@@ -399,7 +397,7 @@ final class Parser {
         return underscores;
     }
 
-    /** Returns the text from {@code from} to {@code to}, a number, without the underscores between its digits. */
+    /// Returns the text from `from` to `to`, a number, without the underscores between its digits.
     private String withoutUnderscores(int from, int to) {
         var number = new StringBuilder(to - from);
         for (var i = from; i < to; i++) {
@@ -411,7 +409,7 @@ final class Parser {
         return number.toString();
     }
 
-    /** Like {@link Character#digit(char, int)}, but only for ASCII, as TOML has no other digits. */
+    /// Like [Character#digit(char, int)], but only for ASCII, as TOML has no other digits.
     private static int digit(char c, int radix) {
         if (radix == DECIMAL_RADIX) {
             return Cursor.isDigit(c) ? c - '0' : -1;
@@ -468,7 +466,7 @@ final class Parser {
         return LocalTime.of(hour, minute, second, nanosecond);
     }
 
-    /** Reads a fraction of a second as nanoseconds, truncating the digits past them as TOML requires. */
+    /// Reads a fraction of a second as nanoseconds, truncating the digits past them as TOML requires.
     private int nanosecond() {
         if (!in.isDigitAt(0)) {
             throw in.expected("a digit of the fraction of a second");
@@ -512,7 +510,7 @@ final class Parser {
 
     // Strings
 
-    /** Reads a basic or literal string, starting at its opening quote. */
+    /// Reads a basic or literal string, starting at its opening quote.
     private String string(boolean multilineAllowed) {
         var quote = in.advance();
         if (multilineAllowed && in.isAt(quote) && in.isAt(1, quote)) {
@@ -571,10 +569,8 @@ final class Parser {
         }
     }
 
-    /**
-     * Reads a run of quotes in a multi-line string, and returns whether it closes the string. Up to two quotes can end
-     * the content of the string, right before its closing delimiter.
-     */
+    /// Reads a run of quotes in a multi-line string, and returns whether it closes the string. Up to two quotes
+    /// can end the content of the string, right before its closing delimiter.
     private boolean quoteRun(StringBuilder string, char quote) {
         var quotes = 0;
         while (in.match(quote)) {
@@ -588,10 +584,8 @@ final class Parser {
         return closes;
     }
 
-    /**
-     * Skips what follows a line ending backslash, which is whitespace and newlines up to the next other character, and
-     * returns whether there was one; otherwise the backslash starts an escape sequence.
-     */
+    /// Skips what follows a line ending backslash, which is whitespace and newlines up to the next other
+    /// character, and returns whether there was one; otherwise the backslash starts an escape sequence.
     private boolean skipLineEndingBackslash() {
         var mark = in.mark();
         skipWhitespace();
@@ -606,7 +600,7 @@ final class Parser {
         return true;
     }
 
-    /** Reads an escape sequence, after its backslash. */
+    /// Reads an escape sequence, after its backslash.
     private void escape(StringBuilder string) {
         if (in.atEnd()) {
             throw in.expected("an escape sequence");
@@ -643,9 +637,8 @@ final class Parser {
         return (int) codePoint;
     }
 
-    /**
-     * An error at the control character where {@link Cursor#skipText(char, boolean)} stopped in a string or a comment.
-     */
+    /// An error at the control character where [Cursor#skipText(char, boolean)] stopped in a string or a
+    /// comment.
     private TomlParseException controlCharacter() {
         return in.error("the control character U+" + Requirements.hex(in.peek()) + " is not allowed here");
     }
@@ -658,7 +651,7 @@ final class Parser {
         }
     }
 
-    /** Skips whitespace, comments and newlines. */
+    /// Skips whitespace, comments and newlines.
     private void skipBlank() {
         while (true) {
             skipWhitespace();
@@ -718,20 +711,20 @@ final class Parser {
         };
     }
 
-    /** How a table was defined, which decides how it can be extended or defined again. */
+    /// How a table was defined, which decides how it can be extended or defined again.
     private enum Kind {
-        /** Defined by a header, or the root table. */
+        /// Defined by a header, or the root table.
         EXPLICIT,
-        /** Created as the parent of a table defined by a header, which a header of its own can define. */
+        /// Created as the parent of a table defined by a header, which a header of its own can define.
         IMPLICIT,
-        /** Created by a dotted key. */
+        /// Created by a dotted key.
         DOTTED
     }
 
-    /** A value of the tree of tables being built, and where it and its key are written. */
+    /// A value of the tree of tables being built, and where it and its key are written.
     private sealed interface Node extends TomlPositions.Spot permits TableNode, ArrayOfTables, Leaf {}
 
-    /** A table being built, which is also the shape of the table it becomes. */
+    /// A table being built, which is also the shape of the table it becomes.
     private static final class TableNode implements Node, TomlPositions.TableShape {
 
         private final Map<String, Node> entries = new LinkedHashMap<>();
@@ -741,7 +734,7 @@ final class Parser {
         private long keyPosition;
         private long valuePosition;
 
-        /** Creates a table that is not the value of a key: the root table, or an inline table. */
+        /// Creates a table that is not the value of a key: the root table, or an inline table.
         TableNode(Kind kind) {
             this.kind = kind;
         }
@@ -778,10 +771,8 @@ final class Parser {
         }
     }
 
-    /**
-     * An array of tables, defined by {@code [[header]]}s, being built, with the positions of its headers. It is also
-     * the shape of the array it becomes.
-     */
+    /// An array of tables, defined by `[[header]]`s, being built, with the positions of its headers. It is also
+    /// the shape of the array it becomes.
     private record ArrayOfTables(List<TableNode> elements, Positions positions, long keyPosition, long valuePosition)
             implements Node, TomlPositions.ArrayShape {
 
@@ -806,11 +797,11 @@ final class Parser {
         }
     }
 
-    /** A value that will not change anymore, with the shape of the array or inline table it is. */
+    /// A value that will not change anymore, with the shape of the array or inline table it is.
     private record Leaf(TomlValue value, long keyPosition, long valuePosition, TomlPositions.@Nullable Shape shape)
             implements Node {}
 
-    /** The shape of an array written as a value, which grows as its elements are read. */
+    /// The shape of an array written as a value, which grows as its elements are read.
     private static final class InlineArray implements TomlPositions.ArrayShape {
 
         private final Positions positions = new Positions();
@@ -837,10 +828,10 @@ final class Parser {
         }
     }
 
-    /** A part of a dotted key, and where it is written, as {@link TomlPositions#pack(int, int)} packs it. */
+    /// A part of a dotted key, and where it is written, as [TomlPositions#pack(int, int)] packs it.
     private record Key(String name, long position) {}
 
-    /** Packed positions, which grow as they are read. */
+    /// Packed positions, which grow as they are read.
     private static final class Positions {
 
         private long[] positions = new long[INITIAL_POSITIONS];

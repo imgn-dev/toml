@@ -4,7 +4,7 @@ import static be.imgn.gaia.core.base.Preconditions.checkArgument;
 
 import java.time.ZoneOffset;
 
-/** The checks that keep every {@link TomlValue} writable as TOML. */
+/// The checks that keep every [TomlValue] writable as TOML.
 final class Requirements {
 
     private static final int MAX_YEAR = 9999;

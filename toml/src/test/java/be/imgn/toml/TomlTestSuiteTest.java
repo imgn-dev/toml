@@ -14,13 +14,11 @@ import java.util.stream.Stream;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
-/**
- * Runs the <a href="https://github.com/toml-lang/toml-test">toml-test</a> suite, as listed by its TOML 1.1.0 manifest.
- *
- * <p>Each valid document must parse to the value of its JSON file, and must be written as a document that parses to the
- * same value. Each of its keys and values must have a position, at a character of the document that is not whitespace.
- * Each invalid document must be rejected.
- */
+/// Runs the [toml-test](https://github.com/toml-lang/toml-test) suite, as listed by its TOML 1.1.0 manifest.
+///
+/// Each valid document must parse to the value of its JSON file, and must be written as a document that parses
+/// to the same value. Each of its keys and values must have a position, at a character of the document that is
+/// not whitespace. Each invalid document must be rejected.
 class TomlTestSuiteTest {
 
     private static final Path TESTS = tests();

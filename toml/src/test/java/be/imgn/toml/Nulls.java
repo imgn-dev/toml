@@ -4,15 +4,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-/** Nulls for testing the null checks of the public API, which NullAway rejects when they are written as literals. */
+/// Nulls for testing the null checks of the public API, which NullAway rejects when they are written as
+/// literals.
 public final class Nulls {
 
     private Nulls() {}
 
-    /**
-     * Returns null, as code that NullAway does not check could pass it. NullAway trusts the return values of the JDK's
-     * unannotated methods, such as {@link Collections#singletonList(Object)}.
-     */
+    /// Returns null, as code that NullAway does not check could pass it. NullAway trusts the return values of
+    /// the JDK's unannotated methods, such as [Collections#singletonList(Object)].
     public static <T> T nullOf(Class<T> type) {
         return type.cast(Collections.singletonList(null).getFirst());
     }

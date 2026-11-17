@@ -1,12 +1,10 @@
 package be.imgn.toml;
 
-/**
- * A position in a text being parsed, which knows its line and column for error messages.
- *
- * <p>The cursor reads the characters from a copy of the text in an array, which saves {@link String#charAt(int)}'s
- * check of the string's coder on every read. It counts lines, but not columns: it keeps where the current line starts,
- * and a column is the distance from there, computed when a position is asked for.
- */
+/// A position in a text being parsed, which knows its line and column for error messages.
+///
+/// The cursor reads the characters from a copy of the text in an array, which saves [String#charAt(int)]'s
+/// check of the string's coder on every read. It counts lines, but not columns: it keeps where the current line
+/// starts, and a column is the distance from there, computed when a position is asked for.
 final class Cursor {
 
     private final String text;
@@ -28,7 +26,7 @@ final class Cursor {
         return chars[position];
     }
 
-    /** Whether the character {@code ahead} positions from here is {@code c}, without moving. */
+    /// Whether the character `ahead` positions from here is `c`, without moving.
     boolean isAt(int ahead, char c) {
         return position + ahead < chars.length && chars[position + ahead] == c;
     }
@@ -37,12 +35,12 @@ final class Cursor {
         return position < chars.length && chars[position] == c;
     }
 
-    /** Whether the character {@code ahead} positions from here is an ASCII digit, without moving. */
+    /// Whether the character `ahead` positions from here is an ASCII digit, without moving.
     boolean isDigitAt(int ahead) {
         return position + ahead < chars.length && isDigit(chars[position + ahead]);
     }
 
-    /** Whether the {@code count} characters from here are ASCII digits, without moving. */
+    /// Whether the `count` characters from here are ASCII digits, without moving.
     boolean areDigits(int count) {
         for (var i = 0; i < count; i++) {
             if (!isDigitAt(i)) {
@@ -61,7 +59,7 @@ final class Cursor {
         return c;
     }
 
-    /** Moves over {@code count} characters, which must not be line feeds. */
+    /// Moves over `count` characters, which must not be line feeds.
     void skip(int count) {
         position += count;
     }
@@ -88,7 +86,7 @@ final class Cursor {
         }
     }
 
-    /** The index of the next character in the text. */
+    /// The index of the next character in the text.
     int position() {
         return position;
     }
@@ -97,26 +95,24 @@ final class Cursor {
         return chars[index];
     }
 
-    /** The text from {@code from} to {@code to}, as indexes {@link #position()} returned. */
+    /// The text from `from` to `to`, as indexes [#position()] returned.
     String text(int from, int to) {
         return text.substring(from, to);
     }
 
-    /** Parses the text from {@code from} to {@code to}, as {@link Long#parseLong(CharSequence, int, int, int)} does. */
+    /// Parses the text from `from` to `to`, as [Long#parseLong(CharSequence, int, int, int)] does.
     long parseLong(int from, int to, int radix) {
         return Long.parseLong(text, from, to, radix);
     }
 
-    /** Appends the text from {@code from} to {@code to} to {@code builder}. */
+    /// Appends the text from `from` to `to` to `builder`.
     void appendTo(StringBuilder builder, int from, int to) {
         builder.append(chars, from, to - from);
     }
 
-    /**
-     * Moves over the characters of a bare key, and returns where they end.
-     *
-     * @return the index after the last character of the bare key
-     */
+    /// Moves over the characters of a bare key, and returns where they end.
+    ///
+    /// @return the index after the last character of the bare key
     int skipBareKey() {
         var i = position;
         while (i < chars.length && isBareKeyChar(chars[i])) {
@@ -126,14 +122,13 @@ final class Cursor {
         return i;
     }
 
-    /**
-     * Moves over the characters that a string or a comment holds as they are written, and returns where they end. It
-     * stops before {@code stop}, a backslash if {@code escapes}, a control character other than tab, which includes the
-     * newlines, or the end of the text.
-     *
-     * @return the index after the last character moved over
-     * @throws TomlParseException at an unpaired surrogate, which has no UTF-8 encoding and so cannot be in a document
-     */
+    /// Moves over the characters that a string or a comment holds as they are written, and returns where they
+    /// end. It stops before `stop`, a backslash if `escapes`, a control character other than tab, which
+    /// includes the newlines, or the end of the text.
+    ///
+    /// @return the index after the last character moved over
+    /// @throws TomlParseException at an unpaired surrogate, which has no UTF-8 encoding and so cannot be in a
+    ///     document
     int skipText(char stop, boolean escapes) {
         var i = position;
         while (i < chars.length) {
@@ -150,7 +145,7 @@ final class Cursor {
         return i;
     }
 
-    /** Returns the index of the low surrogate that pairs with the high surrogate at {@code index}. */
+    /// Returns the index of the low surrogate that pairs with the high surrogate at `index`.
     private int endOfSurrogatePair(int index) {
         var c = chars[index];
         if (!Character.isHighSurrogate(c) || index + 1 == chars.length || !Character.isLowSurrogate(chars[index + 1])) {
@@ -160,12 +155,12 @@ final class Cursor {
         return index + 1;
     }
 
-    /** Whether a character is a control character other than tab, as the newlines are. */
+    /// Whether a character is a control character other than tab, as the newlines are.
     private static boolean isControl(char c) {
         return c < ' ' ? c != '\t' : c == '\u007F';
     }
 
-    /** Where the cursor is, as {@link TomlPositions#pack(int, int)} packs it. */
+    /// Where the cursor is, as [TomlPositions#pack(int, int)] packs it.
     long here() {
         return TomlPositions.pack(line, column());
     }
@@ -188,7 +183,7 @@ final class Cursor {
         return new TomlParseException(message, line, column(), cause);
     }
 
-    /** An error at a position read earlier, such as the key a semantic rule rejects. */
+    /// An error at a position read earlier, such as the key a semantic rule rejects.
     static TomlParseException error(long position, String message) {
         var at = TomlPositions.unpack(position);
         return new TomlParseException(message, at.line(), at.column());
@@ -199,7 +194,7 @@ final class Cursor {
         return new TomlParseException(message, at.line(), at.column(), cause);
     }
 
-    /** An error that states what the grammar wanted and what is actually there. */
+    /// An error that states what the grammar wanted and what is actually there.
     TomlParseException expected(String description) {
         return error("expected " + description + " but found " + (atEnd() ? "end of input" : describe(peek())));
     }
@@ -225,6 +220,6 @@ final class Cursor {
         };
     }
 
-    /** A saved position, to go back to, with the line it is on and where that line starts. */
+    /// A saved position, to go back to, with the line it is on and where that line starts.
     record Mark(int position, int line, int lineStart) {}
 }

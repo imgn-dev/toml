@@ -2,10 +2,8 @@ package be.imgn.toml.benchmarks;
 
 import java.util.Locale;
 
-/**
- * The documents the benchmarks parse, which are generated, always the same: an application's configuration, catalogs of
- * products of two sizes, and documents of numbers and of strings alone.
- */
+/// The documents the benchmarks parse, which are generated, always the same: an application's configuration,
+/// catalogs of products of two sizes, and documents of numbers and of strings alone.
 final class Documents {
 
     private static final int MEDIUM_PRODUCTS = 120;
@@ -35,7 +33,7 @@ final class Documents {
 
     private Documents() {}
 
-    /** Returns the document of a name, which is a value of the benchmarks' {@code document} parameter. */
+    /// Returns the document of a name, which is a value of the benchmarks' `document` parameter.
     static String get(String name) {
         return switch (name) {
             case "small" -> small();
@@ -47,7 +45,7 @@ final class Documents {
         };
     }
 
-    /** An application's configuration, of about 1 KB, with most kinds of value. */
+    /// An application's configuration, of about 1 KB, with most kinds of value.
     private static String small() {
         return """
                 # Application configuration
@@ -98,7 +96,7 @@ final class Documents {
                 """;
     }
 
-    /** A catalog of products, an array of tables of about 340 bytes each. */
+    /// A catalog of products, an array of tables of about 340 bytes each.
     private static String products(int count) {
         var out = new StringBuilder();
         out.append("""
@@ -144,7 +142,7 @@ final class Documents {
         return out.toString();
     }
 
-    /** Integers, floats and arrays of integers, in one table. */
+    /// Integers, floats and arrays of integers, in one table.
     private static String numbers() {
         var out = new StringBuilder("[numbers]\n");
         for (var i = 0; i < NUMBER_ENTRIES; i++) {
@@ -162,7 +160,7 @@ final class Documents {
         return out.toString();
     }
 
-    /** Basic strings with and without escapes, literal strings and multi-line strings, with non-ASCII text. */
+    /// Basic strings with and without escapes, literal strings and multi-line strings, with non-ASCII text.
     private static String strings() {
         var out = new StringBuilder("[strings]\n");
         for (var i = 0; i < STRING_ENTRIES; i++) {
@@ -171,7 +169,7 @@ final class Documents {
         return out.toString();
     }
 
-    /** Returns the format of an entry of {@link #strings()}, of a kind from 0 to 3, which takes its number. */
+    /// Returns the format of an entry of [#strings()], of a kind from 0 to 3, which takes its number.
     private static String stringEntry(int kind) {
         return switch (kind) {
             case 0 -> "s%d = \"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor %1$d\"\n";

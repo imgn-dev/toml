@@ -11,14 +11,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import javax.tools.JavaFileObject;
 
-/** Compiles sources with the processor, and loads what they compile to. */
+/// Compiles sources with the processor, and loads what they compile to.
 final class Compiler {
 
     private static final String CLASS_OUTPUT = "/CLASS_OUTPUT/";
 
     private Compiler() {}
 
-    /** Compiles sources, each given as its qualified name followed by its text. */
+    /// Compiles sources, each given as its qualified name followed by its text.
     static Compilation compile(String... namesAndTexts) {
         var sources = new JavaFileObject[namesAndTexts.length / 2];
         for (var i = 0; i < sources.length; i++) {
@@ -30,10 +30,8 @@ final class Compiler {
                 .compile(sources);
     }
 
-    /**
-     * Writes the class files and resources of a compilation to a directory, and returns a class loader that loads them,
-     * as the class path of an application would.
-     */
+    /// Writes the class files and resources of a compilation to a directory, and returns a class loader that
+    /// loads them, as the class path of an application would.
     static ClassLoader load(Compilation compilation, Path directory) {
         compilation.generatedFiles().stream()
                 .filter(file -> file.getName().startsWith(CLASS_OUTPUT))

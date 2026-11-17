@@ -14,11 +14,11 @@ import org.junit.jupiter.api.io.TempDir;
 
 class ProcessorModuleTest {
 
-    /** The modules javac runs the processor from, besides this one: those it requires. */
+    /// The modules javac runs the processor from, besides this one: those it requires.
     private static final List<String> PROCESSOR_MODULES = List.of(
             "be.imgn.gaia.processing", "be.imgn.gaia.core", "org.jspecify", "com.google.errorprone.annotations");
 
-    /** The modules the application compiles against. */
+    /// The modules the application compiles against.
     private static final List<String> APPLICATION_MODULES =
             List.of("be.imgn.toml", "be.imgn.gaia.core", "org.jspecify", "com.google.errorprone.annotations");
 

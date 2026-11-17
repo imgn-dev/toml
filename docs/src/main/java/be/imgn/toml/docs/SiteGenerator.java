@@ -23,21 +23,19 @@ import org.commonmark.node.Link;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 
-/**
- * Turns the Markdown pages of the guide into HTML pages.
- *
- * <p>The Markdown directory holds the pages and {@code pages.txt}, which lists them in the order of the navigation, one
- * file name per line; {@code index.md} is the home page. Each page needs a level-1 heading, its title. A link goes to
- * another page ({@code binding.md}), to a heading ({@code binding.md#enums} or {@code #enums}, by the heading's
- * identifier as GitHub writes it), to a class in the API documentation ({@code api:be.imgn.toml.TomlTable}), or to a
- * web page ({@code https://...}). Every other link is an error, and so are images and HTML outside code.
- *
- * <p>The theme directory holds {@code template.html}, where {@code {{title}}}, {@code {{navigation}}} and
- * {@code {{content}}} are replaced by those of each page, and the files to copy beside the pages, such as style sheets,
- * with their directories.
- *
- * <p>Every problem found, such as a broken link, is reported at once, and fails the generation.
- */
+/// Turns the Markdown pages of the guide into HTML pages.
+///
+/// The Markdown directory holds the pages and `pages.txt`, which lists them in the order of the navigation, one
+/// file name per line; `index.md` is the home page. Each page needs a level-1 heading, its title. A link goes
+/// to another page (`binding.md`), to a heading (`binding.md#enums` or `#enums`, by the heading's identifier as
+/// GitHub writes it), to a class in the API documentation (`api:be.imgn.toml.TomlTable`), or to a web page
+/// (`https://...`). Every other link is an error, and so are images and HTML outside code.
+///
+/// The theme directory holds `template.html`, where `{{title}}`, `{{navigation}}` and `{{content}}` are
+/// replaced by those of each page, and the files to copy beside the pages, such as style sheets, with their
+/// directories.
+///
+/// Every problem found, such as a broken link, is reported at once, and fails the generation.
 public final class SiteGenerator {
 
     private static final int ARGUMENTS = 3;
@@ -51,13 +49,11 @@ public final class SiteGenerator {
 
     private SiteGenerator() {}
 
-    /**
-     * Generates the guide.
-     *
-     * @param args the Markdown directory, the theme directory and the output directory
-     * @throws IllegalArgumentException if there are not three arguments
-     * @throws IOException if a file cannot be read or written
-     */
+    /// Generates the guide.
+    ///
+    /// @param args the Markdown directory, the theme directory and the output directory
+    /// @throws IllegalArgumentException if there are not three arguments
+    /// @throws IOException if a file cannot be read or written
     public static void main(String[] args) throws IOException {
         if (args.length != ARGUMENTS) {
             throw new IllegalArgumentException("Usage: SiteGenerator <markdown directory> <theme directory> <output>");
@@ -65,11 +61,9 @@ public final class SiteGenerator {
         generate(Path.of(args[0]), Path.of(args[1]), Path.of(args[2]));
     }
 
-    /**
-     * Generates the guide.
-     *
-     * @throws IllegalStateException listing every problem found, if any
-     */
+    /// Generates the guide.
+    ///
+    /// @throws IllegalStateException listing every problem found, if any
     static void generate(Path markdown, Path theme, Path output) throws IOException {
         var generator = new SiteGenerator();
         generator.read(markdown);

@@ -36,16 +36,14 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.jspecify.annotations.Nullable;
 
-/**
- * The conversions that the code the annotation processor generates binds and writes values with. They are public for
- * that code only: applications bind tables with {@link Toml#bind(TomlTable, Class)}, and write records with
- * {@link Toml#toTable(Record)}.
- *
- * <p>Each conversion to a Java value takes a value and its {@link Context}, which locates the value in the document,
- * and throws a {@link TomlMappingException} at its path if the value does not convert.
- *
- * @since 0.1.0
- */
+/// The conversions that the code the annotation processor generates binds and writes values with. They are
+/// public for that code only: applications bind tables with [Toml#bind(TomlTable, Class)], and write records
+/// with [Toml#toTable(Record)].
+///
+/// Each conversion to a Java value takes a value and its [Context], which locates the value in the document,
+/// and throws a [TomlMappingException] at its path if the value does not convert.
+///
+/// @since 0.1.0
 public final class TomlBindings {
 
     // In decreasing order, which the amounts of a duration must follow.
@@ -73,18 +71,16 @@ public final class TomlBindings {
 
     private TomlBindings() {}
 
-    /**
-     * Returns a value that is a table, after checking that it has no other key than {@code keys}, unless the context
-     * ignores unknown keys.
-     *
-     * @param value the value
-     * @param context the context of the value
-     * @param keys the keys the table may have
-     * @return the table
-     * @throws TomlMappingException if {@code value} is not a table, or has another key that the context rejects
-     * @throws NullPointerException if an argument or a key is null
-     * @throws IllegalArgumentException if {@code keys} has the same key twice
-     */
+    /// Returns a value that is a table, after checking that it has no other key than `keys`, unless the context
+    /// ignores unknown keys.
+    ///
+    /// @param value the value
+    /// @param context the context of the value
+    /// @param keys the keys the table may have
+    /// @return the table
+    /// @throws TomlMappingException if `value` is not a table, or has another key that the context rejects
+    /// @throws NullPointerException if an argument or a key is null
+    /// @throws IllegalArgumentException if `keys` has the same key twice
     public static TomlTable table(TomlValue value, Context context, String... keys) {
         requireNonNull(value, "value");
         requireNonNull(context, "context");
@@ -112,18 +108,16 @@ public final class TomlBindings {
         return table;
     }
 
-    /**
-     * Converts the value of a key that a table must have.
-     *
-     * @param <T> the type of the converted value
-     * @param table the table
-     * @param context the context of the table
-     * @param key the key
-     * @param converter converts the value of {@code key}
-     * @return the converted value
-     * @throws TomlMappingException if {@code table} has no value for {@code key}, or if it does not convert
-     * @throws NullPointerException if an argument is null
-     */
+    /// Converts the value of a key that a table must have.
+    ///
+    /// @param <T> the type of the converted value
+    /// @param table the table
+    /// @param context the context of the table
+    /// @param key the key
+    /// @param converter converts the value of `key`
+    /// @return the converted value
+    /// @throws TomlMappingException if `table` has no value for `key`, or if it does not convert
+    /// @throws NullPointerException if an argument is null
     public static <T> T required(TomlTable table, Context context, String key, Converter<? extends T> converter) {
         requireNonNull(table, "table");
         requireNonNull(context, "context");
@@ -137,18 +131,16 @@ public final class TomlBindings {
         return converter.convert(value, keyContext);
     }
 
-    /**
-     * Converts the value of a key that a table may lack.
-     *
-     * @param <T> the type of the converted value
-     * @param table the table
-     * @param context the context of the table
-     * @param key the key
-     * @param converter converts the value of {@code key}
-     * @return the converted value, or null if {@code table} has no value for {@code key}
-     * @throws TomlMappingException if the value does not convert
-     * @throws NullPointerException if an argument is null
-     */
+    /// Converts the value of a key that a table may lack.
+    ///
+    /// @param <T> the type of the converted value
+    /// @param table the table
+    /// @param context the context of the table
+    /// @param key the key
+    /// @param converter converts the value of `key`
+    /// @return the converted value, or null if `table` has no value for `key`
+    /// @throws TomlMappingException if the value does not convert
+    /// @throws NullPointerException if an argument is null
     public static <T> @Nullable T optional(
             TomlTable table, Context context, String key, Converter<? extends T> converter) {
         requireNonNull(table, "table");
@@ -159,15 +151,13 @@ public final class TomlBindings {
         return value == null ? null : converter.convert(value, child(context, key));
     }
 
-    /**
-     * Returns the exception reporting that a record rejected the values it was given, by throwing an exception from its
-     * constructor.
-     *
-     * @param context the context of the table the record was bound from
-     * @param cause the exception the constructor threw
-     * @return the exception to throw
-     * @throws NullPointerException if an argument is null
-     */
+    /// Returns the exception reporting that a record rejected the values it was given, by throwing an exception
+    /// from its constructor.
+    ///
+    /// @param context the context of the table the record was bound from
+    /// @param cause the exception the constructor threw
+    /// @return the exception to throw
+    /// @throws NullPointerException if an argument is null
     public static TomlMappingException rejected(Context context, RuntimeException cause) {
         requireNonNull(context, "context");
         requireNonNull(cause, "cause");
@@ -176,15 +166,13 @@ public final class TomlBindings {
                 context.path(), message == null ? cause.getClass().getName() : message, cause);
     }
 
-    /**
-     * Returns the exception reporting that a string is none of those an enum binds from.
-     *
-     * @param value the string
-     * @param context the context of the string
-     * @param expected the strings the enum binds from
-     * @return the exception to throw
-     * @throws NullPointerException if an argument or an expected string is null
-     */
+    /// Returns the exception reporting that a string is none of those an enum binds from.
+    ///
+    /// @param value the string
+    /// @param context the context of the string
+    /// @param expected the strings the enum binds from
+    /// @return the exception to throw
+    /// @throws NullPointerException if an argument or an expected string is null
     public static TomlMappingException notOneOf(TomlValue value, Context context, String... expected) {
         requireNonNull(value, "value");
         requireNonNull(context, "context");
@@ -194,14 +182,12 @@ public final class TomlBindings {
                 "expected one of " + strings + ", found " + Emitter.formatString(asString(value, context)));
     }
 
-    /**
-     * Returns a converter that checks the type of a value.
-     *
-     * @param <V> the type of the value
-     * @param type the type of the value
-     * @return the converter
-     * @throws NullPointerException if {@code type} is null
-     */
+    /// Returns a converter that checks the type of a value.
+    ///
+    /// @param <V> the type of the value
+    /// @param type the type of the value
+    /// @return the converter
+    /// @throws NullPointerException if `type` is null
     public static <V extends TomlValue> Converter<V> as(Class<V> type) {
         requireNonNull(type, "type");
         return (value, context) -> {
@@ -214,14 +200,12 @@ public final class TomlBindings {
         };
     }
 
-    /**
-     * Returns a converter of an array to a list, which cannot be modified.
-     *
-     * @param <T> the type of the elements
-     * @param element converts each element
-     * @return the converter
-     * @throws NullPointerException if {@code element} is null
-     */
+    /// Returns a converter of an array to a list, which cannot be modified.
+    ///
+    /// @param <T> the type of the elements
+    /// @param element converts each element
+    /// @return the converter
+    /// @throws NullPointerException if `element` is null
     public static <T> Converter<List<T>> list(Converter<? extends T> element) {
         requireNonNull(element, "element");
         return (value, context) -> {
@@ -234,14 +218,12 @@ public final class TomlBindings {
         };
     }
 
-    /**
-     * Returns a converter of an array to a set, which keeps the order of the array and cannot be modified.
-     *
-     * @param <T> the type of the elements
-     * @param element converts each element
-     * @return the converter, which throws a {@link TomlMappingException} if two elements are equal once converted
-     * @throws NullPointerException if {@code element} is null
-     */
+    /// Returns a converter of an array to a set, which keeps the order of the array and cannot be modified.
+    ///
+    /// @param <T> the type of the elements
+    /// @param element converts each element
+    /// @return the converter, which throws a [TomlMappingException] if two elements are equal once converted
+    /// @throws NullPointerException if `element` is null
     public static <T> Converter<Set<T>> set(Converter<? extends T> element) {
         requireNonNull(element, "element");
         return (value, context) -> {
@@ -257,14 +239,12 @@ public final class TomlBindings {
         };
     }
 
-    /**
-     * Returns a converter of a table to a map, which keeps the order of the table and cannot be modified.
-     *
-     * @param <T> the type of the values
-     * @param entry converts the value of each key
-     * @return the converter
-     * @throws NullPointerException if {@code entry} is null
-     */
+    /// Returns a converter of a table to a map, which keeps the order of the table and cannot be modified.
+    ///
+    /// @param <T> the type of the values
+    /// @param entry converts the value of each key
+    /// @return the converter
+    /// @throws NullPointerException if `entry` is null
     public static <T> Converter<Map<String, T>> map(Converter<? extends T> entry) {
         requireNonNull(entry, "entry");
         return (value, context) -> {
@@ -279,15 +259,13 @@ public final class TomlBindings {
         };
     }
 
-    /**
-     * Converts a string.
-     *
-     * @param value the value
-     * @param context the context of the value
-     * @return the string
-     * @throws TomlMappingException if {@code value} is not a string
-     * @throws NullPointerException if an argument is null
-     */
+    /// Converts a string.
+    ///
+    /// @param value the value
+    /// @param context the context of the value
+    /// @return the string
+    /// @throws TomlMappingException if `value` is not a string
+    /// @throws NullPointerException if an argument is null
     public static String asString(TomlValue value, Context context) {
         requireNonNull(value, "value");
         requireNonNull(context, "context");
@@ -297,15 +275,13 @@ public final class TomlBindings {
         throw mismatch(value, context, "a string");
     }
 
-    /**
-     * Converts an integer to a {@code long}.
-     *
-     * @param value the value
-     * @param context the context of the value
-     * @return the integer
-     * @throws TomlMappingException if {@code value} is not an integer
-     * @throws NullPointerException if an argument is null
-     */
+    /// Converts an integer to a `long`.
+    ///
+    /// @param value the value
+    /// @param context the context of the value
+    /// @return the integer
+    /// @throws TomlMappingException if `value` is not an integer
+    /// @throws NullPointerException if an argument is null
     public static long asLong(TomlValue value, Context context) {
         requireNonNull(value, "value");
         requireNonNull(context, "context");
@@ -315,54 +291,46 @@ public final class TomlBindings {
         throw mismatch(value, context, "an integer");
     }
 
-    /**
-     * Converts an integer to an {@code int}.
-     *
-     * @param value the value
-     * @param context the context of the value
-     * @return the integer
-     * @throws TomlMappingException if {@code value} is not an integer in the range of {@code int}
-     * @throws NullPointerException if an argument is null
-     */
+    /// Converts an integer to an `int`.
+    ///
+    /// @param value the value
+    /// @param context the context of the value
+    /// @return the integer
+    /// @throws TomlMappingException if `value` is not an integer in the range of `int`
+    /// @throws NullPointerException if an argument is null
     public static int asInt(TomlValue value, Context context) {
         return (int) inRange(value, context, Integer.MIN_VALUE, Integer.MAX_VALUE);
     }
 
-    /**
-     * Converts an integer to a {@code short}.
-     *
-     * @param value the value
-     * @param context the context of the value
-     * @return the integer
-     * @throws TomlMappingException if {@code value} is not an integer in the range of {@code short}
-     * @throws NullPointerException if an argument is null
-     */
+    /// Converts an integer to a `short`.
+    ///
+    /// @param value the value
+    /// @param context the context of the value
+    /// @return the integer
+    /// @throws TomlMappingException if `value` is not an integer in the range of `short`
+    /// @throws NullPointerException if an argument is null
     public static short asShort(TomlValue value, Context context) {
         return (short) inRange(value, context, Short.MIN_VALUE, Short.MAX_VALUE);
     }
 
-    /**
-     * Converts an integer to a {@code byte}.
-     *
-     * @param value the value
-     * @param context the context of the value
-     * @return the integer
-     * @throws TomlMappingException if {@code value} is not an integer in the range of {@code byte}
-     * @throws NullPointerException if an argument is null
-     */
+    /// Converts an integer to a `byte`.
+    ///
+    /// @param value the value
+    /// @param context the context of the value
+    /// @return the integer
+    /// @throws TomlMappingException if `value` is not an integer in the range of `byte`
+    /// @throws NullPointerException if an argument is null
     public static byte asByte(TomlValue value, Context context) {
         return (byte) inRange(value, context, Byte.MIN_VALUE, Byte.MAX_VALUE);
     }
 
-    /**
-     * Converts a float, or an integer that a {@code double} represents exactly, to a {@code double}.
-     *
-     * @param value the value
-     * @param context the context of the value
-     * @return the number
-     * @throws TomlMappingException if {@code value} is neither a float nor such an integer
-     * @throws NullPointerException if an argument is null
-     */
+    /// Converts a float, or an integer that a `double` represents exactly, to a `double`.
+    ///
+    /// @param value the value
+    /// @param context the context of the value
+    /// @return the number
+    /// @throws TomlMappingException if `value` is neither a float nor such an integer
+    /// @throws NullPointerException if an argument is null
     public static double asDouble(TomlValue value, Context context) {
         requireNonNull(value, "value");
         requireNonNull(context, "context");
@@ -381,16 +349,14 @@ public final class TomlBindings {
         };
     }
 
-    /**
-     * Converts a float in the range of {@code float}, or an integer that a {@code float} represents exactly, to a
-     * {@code float}. A float is rounded to the nearest {@code float}.
-     *
-     * @param value the value
-     * @param context the context of the value
-     * @return the number
-     * @throws TomlMappingException if {@code value} is neither such a float nor such an integer
-     * @throws NullPointerException if an argument is null
-     */
+    /// Converts a float in the range of `float`, or an integer that a `float` represents exactly, to a
+    /// `float`. A float is rounded to the nearest `float`.
+    ///
+    /// @param value the value
+    /// @param context the context of the value
+    /// @return the number
+    /// @throws TomlMappingException if `value` is neither such a float nor such an integer
+    /// @throws NullPointerException if an argument is null
     public static float asFloat(TomlValue value, Context context) {
         requireNonNull(value, "value");
         requireNonNull(context, "context");
@@ -416,15 +382,13 @@ public final class TomlBindings {
         };
     }
 
-    /**
-     * Converts a boolean.
-     *
-     * @param value the value
-     * @param context the context of the value
-     * @return the boolean
-     * @throws TomlMappingException if {@code value} is not a boolean
-     * @throws NullPointerException if an argument is null
-     */
+    /// Converts a boolean.
+    ///
+    /// @param value the value
+    /// @param context the context of the value
+    /// @return the boolean
+    /// @throws TomlMappingException if `value` is not a boolean
+    /// @throws NullPointerException if an argument is null
     public static boolean asBoolean(TomlValue value, Context context) {
         requireNonNull(value, "value");
         requireNonNull(context, "context");
@@ -434,15 +398,13 @@ public final class TomlBindings {
         throw mismatch(value, context, "a boolean");
     }
 
-    /**
-     * Converts an offset date-time.
-     *
-     * @param value the value
-     * @param context the context of the value
-     * @return the date-time
-     * @throws TomlMappingException if {@code value} is not an offset date-time
-     * @throws NullPointerException if an argument is null
-     */
+    /// Converts an offset date-time.
+    ///
+    /// @param value the value
+    /// @param context the context of the value
+    /// @return the date-time
+    /// @throws TomlMappingException if `value` is not an offset date-time
+    /// @throws NullPointerException if an argument is null
     public static OffsetDateTime asOffsetDateTime(TomlValue value, Context context) {
         requireNonNull(value, "value");
         requireNonNull(context, "context");
@@ -452,15 +414,13 @@ public final class TomlBindings {
         throw mismatch(value, context, "an offset date-time");
     }
 
-    /**
-     * Converts a local date-time.
-     *
-     * @param value the value
-     * @param context the context of the value
-     * @return the date-time
-     * @throws TomlMappingException if {@code value} is not a local date-time
-     * @throws NullPointerException if an argument is null
-     */
+    /// Converts a local date-time.
+    ///
+    /// @param value the value
+    /// @param context the context of the value
+    /// @return the date-time
+    /// @throws TomlMappingException if `value` is not a local date-time
+    /// @throws NullPointerException if an argument is null
     public static LocalDateTime asLocalDateTime(TomlValue value, Context context) {
         requireNonNull(value, "value");
         requireNonNull(context, "context");
@@ -470,15 +430,13 @@ public final class TomlBindings {
         throw mismatch(value, context, "a local date-time");
     }
 
-    /**
-     * Converts a local date.
-     *
-     * @param value the value
-     * @param context the context of the value
-     * @return the date
-     * @throws TomlMappingException if {@code value} is not a local date
-     * @throws NullPointerException if an argument is null
-     */
+    /// Converts a local date.
+    ///
+    /// @param value the value
+    /// @param context the context of the value
+    /// @return the date
+    /// @throws TomlMappingException if `value` is not a local date
+    /// @throws NullPointerException if an argument is null
     public static LocalDate asLocalDate(TomlValue value, Context context) {
         requireNonNull(value, "value");
         requireNonNull(context, "context");
@@ -488,15 +446,13 @@ public final class TomlBindings {
         throw mismatch(value, context, "a local date");
     }
 
-    /**
-     * Converts a local time.
-     *
-     * @param value the value
-     * @param context the context of the value
-     * @return the time
-     * @throws TomlMappingException if {@code value} is not a local time
-     * @throws NullPointerException if an argument is null
-     */
+    /// Converts a local time.
+    ///
+    /// @param value the value
+    /// @param context the context of the value
+    /// @return the time
+    /// @throws TomlMappingException if `value` is not a local time
+    /// @throws NullPointerException if an argument is null
     public static LocalTime asLocalTime(TomlValue value, Context context) {
         requireNonNull(value, "value");
         requireNonNull(context, "context");
@@ -506,25 +462,20 @@ public final class TomlBindings {
         throw mismatch(value, context, "a local time");
     }
 
-    /**
-     * Converts a string to a duration. The string is either:
-     *
-     * <ul>
-     *   <li>in ISO-8601, as {@link Duration#parse(CharSequence)} reads it, such as {@code "PT1M30S"} or
-     *       {@code "-P2DT3H"}; or
-     *   <li>one or more amounts, each followed by its unit, the units in decreasing order and at most once each, after
-     *       an optional {@code -} sign, such as {@code "1h30m"}, {@code "2.5s"} or {@code "-500ms"}. An amount is
-     *       digits, optionally followed by a dot and more digits. The units are {@code d} (24 hours), {@code h},
-     *       {@code m}, {@code s}, {@code ms}, {@code us} and {@code ns}. The total must be a whole number of
-     *       nanoseconds.
-     * </ul>
-     *
-     * @param value the value
-     * @param context the context of the value
-     * @return the duration
-     * @throws TomlMappingException if {@code value} is not a string, or not a duration
-     * @throws NullPointerException if an argument is null
-     */
+    /// Converts a string to a duration. The string is either:
+    ///
+    /// - in ISO-8601, as [Duration#parse(CharSequence)] reads it, such as `"PT1M30S"` or
+    ///   `"-P2DT3H"`; or
+    /// - one or more amounts, each followed by its unit, the units in decreasing order and at most once each,
+    ///   after an optional `-` sign, such as `"1h30m"`, `"2.5s"` or `"-500ms"`. An amount is digits, optionally
+    ///   followed by a dot and more digits. The units are `d` (24 hours), `h`, `m`, `s`, `ms`, `us` and `ns`.
+    ///   The total must be a whole number of nanoseconds.
+    ///
+    /// @param value the value
+    /// @param context the context of the value
+    /// @return the duration
+    /// @throws TomlMappingException if `value` is not a string, or not a duration
+    /// @throws NullPointerException if an argument is null
     public static Duration asDuration(TomlValue value, Context context) {
         var string = asString(value, context);
         return duration(string)
@@ -533,15 +484,13 @@ public final class TomlBindings {
                         "expected a duration, as \"PT1M30S\" or \"1m30s\", found " + Emitter.formatString(string)));
     }
 
-    /**
-     * Converts a string to a path of the default file system.
-     *
-     * @param value the value
-     * @param context the context of the value
-     * @return the path
-     * @throws TomlMappingException if {@code value} is not a string, or not a path
-     * @throws NullPointerException if an argument is null
-     */
+    /// Converts a string to a path of the default file system.
+    ///
+    /// @param value the value
+    /// @param context the context of the value
+    /// @return the path
+    /// @throws TomlMappingException if `value` is not a string, or not a path
+    /// @throws NullPointerException if an argument is null
     public static Path asPath(TomlValue value, Context context) {
         var string = asString(value, context);
         try {
@@ -552,15 +501,13 @@ public final class TomlBindings {
         }
     }
 
-    /**
-     * Converts a string to a URI, as {@link URI#URI(String)} parses it.
-     *
-     * @param value the value
-     * @param context the context of the value
-     * @return the URI
-     * @throws TomlMappingException if {@code value} is not a string, or not a URI
-     * @throws NullPointerException if an argument is null
-     */
+    /// Converts a string to a URI, as [URI#URI(String)] parses it.
+    ///
+    /// @param value the value
+    /// @param context the context of the value
+    /// @return the URI
+    /// @throws TomlMappingException if `value` is not a string, or not a URI
+    /// @throws NullPointerException if an argument is null
     public static URI asUri(TomlValue value, Context context) {
         var string = asString(value, context);
         try {
@@ -571,17 +518,15 @@ public final class TomlBindings {
         }
     }
 
-    /**
-     * Puts the value of a record component that cannot be null into a table being built.
-     *
-     * @param <T> the type of the value
-     * @param builder the builder of the table
-     * @param key the key of the component
-     * @param value the value of the component
-     * @param converter converts {@code value} to a TOML value
-     * @throws NullPointerException if an argument is null, or a value in {@code value}
-     * @throws IllegalArgumentException if a string in {@code value} contains an unpaired surrogate
-     */
+    /// Puts the value of a record component that cannot be null into a table being built.
+    ///
+    /// @param <T> the type of the value
+    /// @param builder the builder of the table
+    /// @param key the key of the component
+    /// @param value the value of the component
+    /// @param converter converts `value` to a TOML value
+    /// @throws NullPointerException if an argument is null, or a value in `value`
+    /// @throws IllegalArgumentException if a string in `value` contains an unpaired surrogate
     public static <T> void put(
             TomlTable.Builder builder, String key, T value, Function<? super T, ? extends TomlValue> converter) {
         requireNonNull(builder, "builder");
@@ -591,17 +536,15 @@ public final class TomlBindings {
         builder.put(key, converter.apply(value));
     }
 
-    /**
-     * Puts the value of a {@code @Nullable} record component into a table being built, unless it is null.
-     *
-     * @param <T> the type of the value
-     * @param builder the builder of the table
-     * @param key the key of the component
-     * @param value the value of the component, or null to leave the key out
-     * @param converter converts {@code value} to a TOML value
-     * @throws NullPointerException if an argument but {@code value} is null, or a value in {@code value}
-     * @throws IllegalArgumentException if a string in {@code value} contains an unpaired surrogate
-     */
+    /// Puts the value of a `@Nullable` record component into a table being built, unless it is null.
+    ///
+    /// @param <T> the type of the value
+    /// @param builder the builder of the table
+    /// @param key the key of the component
+    /// @param value the value of the component, or null to leave the key out
+    /// @param converter converts `value` to a TOML value
+    /// @throws NullPointerException if an argument but `value` is null, or a value in `value`
+    /// @throws IllegalArgumentException if a string in `value` contains an unpaired surrogate
     public static <T> void putIfNotNull(
             TomlTable.Builder builder,
             String key,
@@ -615,15 +558,13 @@ public final class TomlBindings {
         }
     }
 
-    /**
-     * Converts a list or a set to an array, in its iteration order.
-     *
-     * @param <T> the type of the elements
-     * @param values the elements
-     * @param element converts each element
-     * @return the array
-     * @throws NullPointerException if an argument or an element is null
-     */
+    /// Converts a list or a set to an array, in its iteration order.
+    ///
+    /// @param <T> the type of the elements
+    /// @param values the elements
+    /// @param element converts each element
+    /// @return the array
+    /// @throws NullPointerException if an argument or an element is null
     public static <T> TomlArray toArray(Collection<T> values, Function<? super T, ? extends TomlValue> element) {
         requireNonNull(values, "values");
         requireNonNull(element, "element");
@@ -634,16 +575,14 @@ public final class TomlBindings {
         return new TomlArray(array);
     }
 
-    /**
-     * Converts a map to a table, in its iteration order.
-     *
-     * @param <T> the type of the values
-     * @param values the map
-     * @param entry converts the value of each key
-     * @return the table
-     * @throws NullPointerException if an argument, a key or a value is null
-     * @throws IllegalArgumentException if a key contains an unpaired surrogate
-     */
+    /// Converts a map to a table, in its iteration order.
+    ///
+    /// @param <T> the type of the values
+    /// @param values the map
+    /// @param entry converts the value of each key
+    /// @return the table
+    /// @throws NullPointerException if an argument, a key or a value is null
+    /// @throws IllegalArgumentException if a key contains an unpaired surrogate
     public static <T> TomlTable toTable(Map<String, T> values, Function<? super T, ? extends TomlValue> entry) {
         requireNonNull(values, "values");
         requireNonNull(entry, "entry");
@@ -688,7 +627,7 @@ public final class TomlBindings {
         }
     }
 
-    /** Adds up the amounts of a duration from {@code start}, or returns empty if they are not valid. */
+    /// Adds up the amounts of a duration from `start`, or returns empty if they are not valid.
     private static Optional<BigDecimal> totalNanos(String string, int start) {
         var matcher = DURATION_AMOUNT.matcher(string);
         var position = start;
@@ -733,45 +672,37 @@ public final class TomlBindings {
         return KINDS.getOrDefault(type, "a value");
     }
 
-    /**
-     * Where a value is in the document, and how to bind it.
-     *
-     * @param path the path of the value, as {@link TomlMappingException#path()} describes it
-     * @param unknownKeys what binding does with a key that no component takes
-     * @since 0.1.0
-     */
+    /// Where a value is in the document, and how to bind it.
+    ///
+    /// @param path the path of the value, as [TomlMappingException#path()] describes it
+    /// @param unknownKeys what binding does with a key that no component takes
+    /// @since 0.1.0
     public record Context(String path, UnknownKeys unknownKeys) {
 
-        /**
-         * Creates a context.
-         *
-         * @param path the path of the value
-         * @param unknownKeys what binding does with a key that no component takes
-         * @throws NullPointerException if {@code path} or {@code unknownKeys} is null
-         */
+        /// Creates a context.
+        ///
+        /// @param path the path of the value
+        /// @param unknownKeys what binding does with a key that no component takes
+        /// @throws NullPointerException if `path` or `unknownKeys` is null
         public Context {
             requireNonNull(path, "path");
             requireNonNull(unknownKeys, "unknownKeys");
         }
     }
 
-    /**
-     * Converts a value.
-     *
-     * @param <T> the type of the converted value
-     * @since 0.1.0
-     */
+    /// Converts a value.
+    ///
+    /// @param <T> the type of the converted value
+    /// @since 0.1.0
     @FunctionalInterface
     public interface Converter<T> {
 
-        /**
-         * Converts a value.
-         *
-         * @param value the value
-         * @param context the context of the value
-         * @return the converted value
-         * @throws TomlMappingException if {@code value} does not convert
-         */
+        /// Converts a value.
+        ///
+        /// @param value the value
+        /// @param context the context of the value
+        /// @return the converted value
+        /// @throws TomlMappingException if `value` does not convert
         T convert(TomlValue value, Context context);
     }
 }

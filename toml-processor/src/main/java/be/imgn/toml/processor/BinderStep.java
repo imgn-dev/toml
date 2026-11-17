@@ -10,7 +10,7 @@ import java.util.Set;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.NestingKind;
 
-/** Generates the binder of each record annotated {@code TomlConfig}. */
+/// Generates the binder of each record annotated `TomlConfig`.
 final class BinderStep implements Step {
 
     private static final String TOML_CONFIG = "be.imgn.toml.TomlConfig";

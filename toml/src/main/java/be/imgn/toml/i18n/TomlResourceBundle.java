@@ -28,45 +28,42 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.Set;
 import org.jspecify.annotations.Nullable;
 
-/**
- * A resource bundle whose resources are the values of a TOML table.
- *
- * <p>Tables are flattened into dotted keys: the document
- *
- * <pre>{@code
- * title = "Inventory"
- *
- * [errors]
- * not-found = "No item {0}"
- * retries = 3
- * }</pre>
- *
- * <p>has the keys {@code title}, {@code errors.not-found} and {@code errors.retries}. Two values whose keys flatten to
- * the same one, such as {@code "a.b" = 1} and {@code a.b = 2}, are an error.
- *
- * <p>The values keep their TOML type: {@link #getObject(String)} returns a {@code String}, a {@code Long}, a
- * {@code Double}, a {@code Boolean}, an {@code OffsetDateTime}, a {@code LocalDateTime}, a {@code LocalDate} or a
- * {@code LocalTime}, and an array of strings is a {@code String[]}, which {@link #getStringArray(String)} returns. Any
- * other array is an error. The typed getters, such as {@link #getLong(String)}, look the value up as
- * {@link #getObject(String)} does, through the parents of the bundle, and check its type.
- *
- * <p>{@link ResourceBundle#getBundle(String, Locale, ResourceBundle.Control)} loads bundles from {@code .toml}
- * resources, such as {@code Messages_fr_BE.toml}, with the control {@link #control()} returns:
- *
- * <pre>{@code
- * ResourceBundle messages = ResourceBundle.getBundle("com.example.Messages", locale, TomlResourceBundle.control());
- * }</pre>
- *
- * <p>A named module cannot pass a control to {@code getBundle}: it loads its bundles through a
- * {@link TomlResourceBundleProvider} instead.
- *
- * @since 0.1.0
- */
+/// A resource bundle whose resources are the values of a TOML table.
+///
+/// Tables are flattened into dotted keys: the document
+///
+/// ```toml
+/// title = "Inventory"
+///
+/// [errors]
+/// not-found = "No item {0}"
+/// retries = 3
+/// ```
+///
+/// has the keys `title`, `errors.not-found` and `errors.retries`. Two values whose keys flatten to
+/// the same one, such as `"a.b" = 1` and `a.b = 2`, are an error.
+///
+/// The values keep their TOML type: [#getObject(String)] returns a `String`, a `Long`, a
+/// `Double`, a `Boolean`, an `OffsetDateTime`, a `LocalDateTime`, a `LocalDate` or a
+/// `LocalTime`, and an array of strings is a `String[]`, which [#getStringArray(String)] returns. Any
+/// other array is an error. The typed getters, such as [#getLong(String)], look the value up as
+/// [#getObject(String)] does, through the parents of the bundle, and check its type.
+///
+/// [ResourceBundle#getBundle(String, Locale, ResourceBundle.Control)] loads bundles from `.toml`
+/// resources, such as `Messages_fr_BE.toml`, with the control [#control()] returns:
+///
+/// ```java
+/// ResourceBundle messages = ResourceBundle.getBundle("com.example.Messages", locale, TomlResourceBundle.control());
+/// ```
+///
+/// A named module cannot pass a control to `getBundle`: it loads its bundles through a
+/// [TomlResourceBundleProvider] instead.
+///
+/// @since 0.1.0
 public final class TomlResourceBundle extends ResourceBundle {
 
     private static final String FORMAT = "toml";
@@ -74,14 +71,12 @@ public final class TomlResourceBundle extends ResourceBundle {
 
     private final Map<String, Object> values;
 
-    /**
-     * Creates a bundle of the values of a table.
-     *
-     * @param table the table
-     * @throws NullPointerException if {@code table} is null
-     * @throws IllegalArgumentException if two values have the same flattened key, or if an array has values that are
-     *     not strings
-     */
+    /// Creates a bundle of the values of a table.
+    ///
+    /// @param table the table
+    /// @throws NullPointerException if `table` is null
+    /// @throws IllegalArgumentException if two values have the same flattened key, or if an array has values
+    ///     that are not strings
     public TomlResourceBundle(TomlTable table) {
         requireNonNull(table, "table");
         var values = new HashMap<String, Object>();
@@ -89,44 +84,38 @@ public final class TomlResourceBundle extends ResourceBundle {
         this.values = Collections.unmodifiableMap(values);
     }
 
-    /**
-     * Returns a control that loads bundles from {@code .toml} resources, which must be UTF-8, as TOML requires. The
-     * resource of a bundle is named as {@link ResourceBundle.Control#toResourceName(String, String)} names it, with the
-     * suffix {@code toml}: the bundle {@code com.example.Messages} for the locale {@code fr_BE} is the resource
-     * {@code com/example/Messages_fr_BE.toml}.
-     *
-     * <p>A resource that is not valid TOML, or does not make a bundle, fails {@code getBundle} with a
-     * {@link MissingResourceException} whose cause tells why.
-     *
-     * @return the control
-     */
+    /// Returns a control that loads bundles from `.toml` resources, which must be UTF-8, as TOML requires. The
+    /// resource of a bundle is named as [ResourceBundle.Control#toResourceName(String, String)] names it, with
+    /// the suffix `toml`: the bundle `com.example.Messages` for the locale `fr_BE` is the resource
+    /// `com/example/Messages_fr_BE.toml`.
+    ///
+    /// A resource that is not valid TOML, or does not make a bundle, fails `getBundle` with a
+    /// [MissingResourceException][java.util.MissingResourceException] whose cause tells why.
+    ///
+    /// @return the control
     public static ResourceBundle.Control control() {
         return CONTROL;
     }
 
-    /**
-     * Returns the integer that is the value of a key.
-     *
-     * @param key the key
-     * @return the value of {@code key}
-     * @throws NullPointerException if {@code key} is null
-     * @throws MissingResourceException if neither this bundle nor its parents have a value for {@code key}
-     * @throws ClassCastException if the value of {@code key} is not an integer
-     */
+    /// Returns the integer that is the value of a key.
+    ///
+    /// @param key the key
+    /// @return the value of `key`
+    /// @throws NullPointerException if `key` is null
+    /// @throws java.util.MissingResourceException if neither this bundle nor its parents have a value for `key`
+    /// @throws ClassCastException if the value of `key` is not an integer
     public long getLong(String key) {
         return require(key, Long.class);
     }
 
-    /**
-     * Returns the integer that is the value of a key, as an {@code int}.
-     *
-     * @param key the key
-     * @return the value of {@code key}
-     * @throws NullPointerException if {@code key} is null
-     * @throws MissingResourceException if neither this bundle nor its parents have a value for {@code key}
-     * @throws ClassCastException if the value of {@code key} is not an integer
-     * @throws ArithmeticException if the value of {@code key} is out of the range of {@code int}
-     */
+    /// Returns the integer that is the value of a key, as an `int`.
+    ///
+    /// @param key the key
+    /// @return the value of `key`
+    /// @throws NullPointerException if `key` is null
+    /// @throws java.util.MissingResourceException if neither this bundle nor its parents have a value for `key`
+    /// @throws ClassCastException if the value of `key` is not an integer
+    /// @throws ArithmeticException if the value of `key` is out of the range of `int`
     public int getInt(String key) {
         var value = getLong(key);
         if (value != (int) value) {
@@ -135,80 +124,68 @@ public final class TomlResourceBundle extends ResourceBundle {
         return (int) value;
     }
 
-    /**
-     * Returns the float that is the value of a key.
-     *
-     * @param key the key
-     * @return the value of {@code key}
-     * @throws NullPointerException if {@code key} is null
-     * @throws MissingResourceException if neither this bundle nor its parents have a value for {@code key}
-     * @throws ClassCastException if the value of {@code key} is not a float
-     */
+    /// Returns the float that is the value of a key.
+    ///
+    /// @param key the key
+    /// @return the value of `key`
+    /// @throws NullPointerException if `key` is null
+    /// @throws java.util.MissingResourceException if neither this bundle nor its parents have a value for `key`
+    /// @throws ClassCastException if the value of `key` is not a float
     public double getDouble(String key) {
         return require(key, Double.class);
     }
 
-    /**
-     * Returns the boolean that is the value of a key.
-     *
-     * @param key the key
-     * @return the value of {@code key}
-     * @throws NullPointerException if {@code key} is null
-     * @throws MissingResourceException if neither this bundle nor its parents have a value for {@code key}
-     * @throws ClassCastException if the value of {@code key} is not a boolean
-     */
+    /// Returns the boolean that is the value of a key.
+    ///
+    /// @param key the key
+    /// @return the value of `key`
+    /// @throws NullPointerException if `key` is null
+    /// @throws java.util.MissingResourceException if neither this bundle nor its parents have a value for `key`
+    /// @throws ClassCastException if the value of `key` is not a boolean
     public boolean getBoolean(String key) {
         return require(key, Boolean.class);
     }
 
-    /**
-     * Returns the offset date-time that is the value of a key.
-     *
-     * @param key the key
-     * @return the value of {@code key}
-     * @throws NullPointerException if {@code key} is null
-     * @throws MissingResourceException if neither this bundle nor its parents have a value for {@code key}
-     * @throws ClassCastException if the value of {@code key} is not an offset date-time
-     */
+    /// Returns the offset date-time that is the value of a key.
+    ///
+    /// @param key the key
+    /// @return the value of `key`
+    /// @throws NullPointerException if `key` is null
+    /// @throws java.util.MissingResourceException if neither this bundle nor its parents have a value for `key`
+    /// @throws ClassCastException if the value of `key` is not an offset date-time
     public OffsetDateTime getOffsetDateTime(String key) {
         return require(key, OffsetDateTime.class);
     }
 
-    /**
-     * Returns the local date-time that is the value of a key.
-     *
-     * @param key the key
-     * @return the value of {@code key}
-     * @throws NullPointerException if {@code key} is null
-     * @throws MissingResourceException if neither this bundle nor its parents have a value for {@code key}
-     * @throws ClassCastException if the value of {@code key} is not a local date-time
-     */
+    /// Returns the local date-time that is the value of a key.
+    ///
+    /// @param key the key
+    /// @return the value of `key`
+    /// @throws NullPointerException if `key` is null
+    /// @throws java.util.MissingResourceException if neither this bundle nor its parents have a value for `key`
+    /// @throws ClassCastException if the value of `key` is not a local date-time
     public LocalDateTime getLocalDateTime(String key) {
         return require(key, LocalDateTime.class);
     }
 
-    /**
-     * Returns the local date that is the value of a key.
-     *
-     * @param key the key
-     * @return the value of {@code key}
-     * @throws NullPointerException if {@code key} is null
-     * @throws MissingResourceException if neither this bundle nor its parents have a value for {@code key}
-     * @throws ClassCastException if the value of {@code key} is not a local date
-     */
+    /// Returns the local date that is the value of a key.
+    ///
+    /// @param key the key
+    /// @return the value of `key`
+    /// @throws NullPointerException if `key` is null
+    /// @throws java.util.MissingResourceException if neither this bundle nor its parents have a value for `key`
+    /// @throws ClassCastException if the value of `key` is not a local date
     public LocalDate getLocalDate(String key) {
         return require(key, LocalDate.class);
     }
 
-    /**
-     * Returns the local time that is the value of a key.
-     *
-     * @param key the key
-     * @return the value of {@code key}
-     * @throws NullPointerException if {@code key} is null
-     * @throws MissingResourceException if neither this bundle nor its parents have a value for {@code key}
-     * @throws ClassCastException if the value of {@code key} is not a local time
-     */
+    /// Returns the local time that is the value of a key.
+    ///
+    /// @param key the key
+    /// @return the value of `key`
+    /// @throws NullPointerException if `key` is null
+    /// @throws java.util.MissingResourceException if neither this bundle nor its parents have a value for `key`
+    /// @throws ClassCastException if the value of `key` is not a local time
     public LocalTime getLocalTime(String key) {
         return require(key, LocalTime.class);
     }

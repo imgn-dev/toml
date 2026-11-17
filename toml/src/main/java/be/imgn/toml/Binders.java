@@ -2,7 +2,7 @@ package be.imgn.toml;
 
 import java.util.ServiceLoader;
 
-/** Finds the {@link TomlBinder} of a record, once per record. */
+/// Finds the [TomlBinder] of a record, once per record.
 final class Binders {
 
     private static final ClassValue<TomlBinder<?>> BINDERS = new ClassValue<>() {

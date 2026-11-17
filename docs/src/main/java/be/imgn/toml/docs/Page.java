@@ -18,7 +18,7 @@ import org.commonmark.node.Text;
 import org.commonmark.parser.Parser;
 import org.jspecify.annotations.Nullable;
 
-/** A Markdown page of the guide, parsed, with an identifier for each of its headings. */
+/// A Markdown page of the guide, parsed, with an identifier for each of its headings.
 final class Page {
 
     private final String name;
@@ -40,12 +40,12 @@ final class Page {
         return new Page(file.getFileName().toString(), document, headings.title, headings.ids);
     }
 
-    /** The name of the Markdown file, such as {@code binding.md}. */
+    /// The name of the Markdown file, such as `binding.md`.
     String name() {
         return name;
     }
 
-    /** The name of the HTML file, such as {@code binding.html}. */
+    /// The name of the HTML file, such as `binding.html`.
     String htmlName() {
         return name.substring(0, name.length() - ".md".length()) + ".html";
     }
@@ -54,7 +54,7 @@ final class Page {
         return document;
     }
 
-    /** The text of the first level-1 heading, if any. */
+    /// The text of the first level-1 heading, if any.
     @Nullable
     String title() {
         return title;
@@ -69,10 +69,8 @@ final class Page {
         return headingIds.containsValue(id);
     }
 
-    /**
-     * Returns the identifier of a heading: its text in lowercase, with spaces as hyphens and without the characters
-     * that are neither letters, digits, hyphens nor underscores, as GitHub writes them.
-     */
+    /// Returns the identifier of a heading: its text in lowercase, with spaces as hyphens and without the
+    /// characters that are neither letters, digits, hyphens nor underscores, as GitHub writes them.
     static String slug(String text) {
         var slug = new StringBuilder();
         text.strip().toLowerCase(Locale.ROOT).codePoints().forEach(c -> {
