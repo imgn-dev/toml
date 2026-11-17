@@ -74,15 +74,15 @@ loadScripts(document, 'script');</script>
 <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/annotation/Retention.html" title="class or interface in java.lang.annotation" class="external-link">@Retention</a>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/annotation/RetentionPolicy.html#CLASS" title="class or interface in java.lang.annotation" class="external-link">CLASS</a>)
 <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/annotation/Target.html" title="class or interface in java.lang.annotation" class="external-link">@Target</a>({<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/annotation/ElementType.html#RECORD_COMPONENT" title="class or interface in java.lang.annotation" class="external-link">RECORD_COMPONENT</a>,<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/annotation/ElementType.html#FIELD" title="class or interface in java.lang.annotation" class="external-link">FIELD</a>})
 </span><span class="modifiers">public @interface </span><span class="element-name type-name-label">TomlKey</span></div>
-<div class="block">Gives the key of a record component, or the string of an enum constant, in place of its name in kebab case.
-
-<pre><code>record Database(@TomlKey("jdbc_url") String url) {}
+<div class="block"><p>Gives the key of a record component, or the string of an enum constant, in place of its name in kebab case.</p>
+<pre><code class="language-java">record Database(@TomlKey(&quot;jdbc_url&quot;) String url) {}
 
 enum Level {
-    @TomlKey("warn") WARNING,
+    @TomlKey(&quot;warn&quot;) WARNING,
     ERROR
 }
-</code></pre></div>
+</code></pre>
+</div>
 <dl class="notes">
 <dt>Since:</dt>
 <dd>0.1.0</dd>

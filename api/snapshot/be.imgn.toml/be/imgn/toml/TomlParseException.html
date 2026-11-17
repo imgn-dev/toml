@@ -85,9 +85,9 @@ loadScripts(document, 'script');</script>
 <div class="horizontal-scroll">
 <div class="type-signature"><span class="modifiers">public final class </span><span class="element-name type-name-label">TomlParseException</span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/RuntimeException.html" title="class or interface in java.lang" class="external-link">RuntimeException</a></span></div>
-<div class="block">Thrown when a document is not valid TOML.
-
-<p>The message starts with the line and column of the error, and states what was expected and what was found.</div>
+<div class="block"><p>Thrown when a document is not valid TOML.</p>
+<p>The message starts with the line and column of the error, and states what was expected and what was found.</p>
+</div>
 <dl class="notes">
 <dt>Since:</dt>
 <dd>0.1.0</dd>
@@ -143,13 +143,13 @@ loadScripts(document, 'script');</script>
 <h3>position</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="TomlPosition.html" title="class in be.imgn.toml">TomlPosition</a></span>&nbsp;<span class="element-name">position</span>()</div>
-<div class="block">Returns where the error is.
-
-<p>An error about a whole value, such as an integer that does not fit in 64 bits or an invalid date, is where the
-value starts. An error about the definition of a table, such as a table defined twice, is at the <code>[</code> of its
-header. An error about a key, such as a duplicate key, is at that key, or at the part of a dotted key it is
-about, inside a header too. These are the positions <a href="TomlPositions.html" title="class in be.imgn.toml"><code>TomlPositions</code></a> reports. Any other error is where the
-parser found it.</div>
+<div class="block"><p>Returns where the error is.</p>
+<p>An error about a whole value, such as an integer that does not fit in 64 bits or an invalid date, is
+where the value starts. An error about the definition of a table, such as a table defined twice, is at
+the <code>[</code> of its header. An error about a key, such as a duplicate key, is at that key, or at the part of
+a dotted key it is about, inside a header too. These are the positions <a href="TomlPositions.html" title="class in be.imgn.toml"><code>TomlPositions</code></a> reports. Any
+other error is where the parser found it.</p>
+</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>the position of the error</dd>

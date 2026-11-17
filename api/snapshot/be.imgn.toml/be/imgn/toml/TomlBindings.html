@@ -103,12 +103,12 @@ loadScripts(document, 'script');</script>
 <div class="horizontal-scroll">
 <div class="type-signature"><span class="modifiers">public final class </span><span class="element-name type-name-label">TomlBindings</span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span></div>
-<div class="block">The conversions that the code the annotation processor generates binds and writes values with. They are public for
-that code only: applications bind tables with <a href="Toml.html#bind(be.imgn.toml.TomlTable,java.lang.Class)"><code>Toml.bind(TomlTable, Class)</code></a>, and write records with
-<a href="Toml.html#toTable(java.lang.Record)"><code>Toml.toTable(Record)</code></a>.
-
+<div class="block"><p>The conversions that the code the annotation processor generates binds and writes values with. They are
+public for that code only: applications bind tables with <a href="Toml.html#bind(be.imgn.toml.TomlTable,java.lang.Class)"><code>Toml.bind(TomlTable, Class)</code></a>, and write records
+with <a href="Toml.html#toTable(java.lang.Record)"><code>Toml.toTable(Record)</code></a>.</p>
 <p>Each conversion to a Java value takes a value and its <a href="TomlBindings.Context.html" title="class in be.imgn.toml"><code>TomlBindings.Context</code></a>, which locates the value in the document,
-and throws a <a href="TomlMappingException.html" title="class in be.imgn.toml"><code>TomlMappingException</code></a> at its path if the value does not convert.</div>
+and throws a <a href="TomlMappingException.html" title="class in be.imgn.toml"><code>TomlMappingException</code></a> at its path if the value does not convert.</p>
+</div>
 <dl class="notes">
 <dt>Since:</dt>
 <dd>0.1.0</dd>
@@ -291,8 +291,8 @@ and throws a <a href="TomlMappingException.html" title="class in be.imgn.toml"><
 <div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#rejected(be.imgn.toml.TomlBindings.Context,java.lang.RuntimeException)" class="member-name-link">rejected</a><wbr>(<a href="TomlBindings.Context.html" title="class in be.imgn.toml">TomlBindings.Context</a>&nbsp;context,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/RuntimeException.html" title="class or interface in java.lang" class="external-link">RuntimeException</a>&nbsp;cause)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
-<div class="block">Returns the exception reporting that a record rejected the values it was given, by throwing an exception from its
-constructor.</div>
+<div class="block">Returns the exception reporting that a record rejected the values it was given, by throwing an exception
+from its constructor.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static &lt;T&gt;&nbsp;T</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#required(be.imgn.toml.TomlTable,be.imgn.toml.TomlBindings.Context,java.lang.String,be.imgn.toml.TomlBindings.Converter)" class="member-name-link">required</a><wbr>(<a href="TomlTable.html" title="class in be.imgn.toml">TomlTable</a>&nbsp;table,
@@ -426,8 +426,8 @@ ignores unknown keys.</div>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="TomlMappingException.html" title="class in be.imgn.toml">TomlMappingException</a></span>&nbsp;<span class="element-name">rejected</span><wbr><span class="parameters">(<a href="TomlBindings.Context.html" title="class in be.imgn.toml">TomlBindings.Context</a>&nbsp;context,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/RuntimeException.html" title="class or interface in java.lang" class="external-link">RuntimeException</a>&nbsp;cause)</span></div>
-<div class="block">Returns the exception reporting that a record rejected the values it was given, by throwing an exception from its
-constructor.</div>
+<div class="block">Returns the exception reporting that a record rejected the values it was given, by throwing an exception
+from its constructor.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>context</code> - the context of the table the record was bound from</dd>
@@ -786,17 +786,16 @@ constructor.</div>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a></span>&nbsp;<span class="element-name">asDuration</span><wbr><span class="parameters">(<a href="TomlValue.html" title="interface in be.imgn.toml">TomlValue</a>&nbsp;value,
  <a href="TomlBindings.Context.html" title="class in be.imgn.toml">TomlBindings.Context</a>&nbsp;context)</span></div>
-<div class="block">Converts a string to a duration. The string is either:
-
+<div class="block"><p>Converts a string to a duration. The string is either:</p>
 <ul>
-  <li>in ISO-8601, as <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html#parse(java.lang.CharSequence)" title="class or interface in java.time" class="external-link"><code>Duration.parse(CharSequence)</code></a> reads it, such as <code>"PT1M30S"</code> or
-      <code>"-P2DT3H"</code>; or
-  <li>one or more amounts, each followed by its unit, the units in decreasing order and at most once each, after
-      an optional <code>-</code> sign, such as <code>"1h30m"</code>, <code>"2.5s"</code> or <code>"-500ms"</code>. An amount is
-      digits, optionally followed by a dot and more digits. The units are <code>d</code> (24 hours), <code>h</code>,
-      <code>m</code>, <code>s</code>, <code>ms</code>, <code>us</code> and <code>ns</code>. The total must be a whole number of
-      nanoseconds.
-</ul></div>
+<li>in ISO-8601, as <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html#parse(java.lang.CharSequence)" title="class or interface in java.time" class="external-link"><code>Duration.parse(CharSequence)</code></a> reads it, such as <code>&quot;PT1M30S&quot;</code> or
+<code>&quot;-P2DT3H&quot;</code>; or</li>
+<li>one or more amounts, each followed by its unit, the units in decreasing order and at most once each,
+after an optional <code>-</code> sign, such as <code>&quot;1h30m&quot;</code>, <code>&quot;2.5s&quot;</code> or <code>&quot;-500ms&quot;</code>. An amount is digits, optionally
+followed by a dot and more digits. The units are <code>d</code> (24 hours), <code>h</code>, <code>m</code>, <code>s</code>, <code>ms</code>, <code>us</code> and <code>ns</code>.
+The total must be a whole number of nanoseconds.</li>
+</ul>
+</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>value</code> - the value</dd>

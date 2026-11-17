@@ -88,14 +88,12 @@ loadScripts(document, 'script');</script>
 <div class="horizontal-scroll">
 <div class="type-signature"><span class="modifiers">public abstract class </span><span class="element-name type-name-label">TomlResourceBundleProvider</span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/spi/AbstractResourceBundleProvider.html" title="class or interface in java.util.spi" class="external-link">AbstractResourceBundleProvider</a></span></div>
-<div class="block">Provides <a href="TomlResourceBundle.html" title="class in be.imgn.toml.i18n"><code>TomlResourceBundle</code></a>s to a named module, which cannot load them with
-<a href="TomlResourceBundle.html#control()"><code>TomlResourceBundle.control()</code></a>.
-
-<p>The module declares the service of its bundles, and a provider of it that extends this class. The service is named
-after the base name of the bundles, as <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/ResourceBundle.html#getBundle(java.lang.String,java.util.Locale)" title="class or interface in java.util" class="external-link"><code>ResourceBundle.getBundle(String, Locale)</code></a> requires: the bundles
-<code>com.example.Messages</code> are provided by <code>com.example.spi.MessagesProvider</code>.
-
-<pre><code>module com.example {
+<div class="block"><p>Provides <a href="TomlResourceBundle.html" title="class in be.imgn.toml.i18n"><code>TomlResourceBundle</code></a>s to a named module, which cannot load them with
+<a href="TomlResourceBundle.html#control()"><code>TomlResourceBundle.control()</code></a>.</p>
+<p>The module declares the service of its bundles, and a provider of it that extends this class. The service is
+named after the base name of the bundles, as <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/ResourceBundle.html#getBundle(java.lang.String,java.util.Locale)" title="class or interface in java.util" class="external-link"><code>ResourceBundle.getBundle(String, Locale)</code></a> requires: the
+bundles <code>com.example.Messages</code> are provided by <code>com.example.spi.MessagesProvider</code>.</p>
+<pre><code class="language-java">module com.example {
     requires be.imgn.toml;
     uses com.example.spi.MessagesProvider;
     provides com.example.spi.MessagesProvider with com.example.internal.TomlMessagesProvider;
@@ -109,12 +107,12 @@ public final class TomlMessagesProvider extends TomlResourceBundleProvider imple
     }
 }
 
-ResourceBundle messages = ResourceBundle.getBundle("com.example.Messages", locale);
+ResourceBundle messages = ResourceBundle.getBundle(&quot;com.example.Messages&quot;, locale);
 </code></pre>
-
-<p>The provider reads the resources through the opener it is given, because a module encapsulates the resources of
-its packages: <code>be.imgn.toml</code> cannot read <code>com/example/Messages_fr_BE.toml</code>, but a method reference
-created in the module <code>com.example</code> can.</div>
+<p>The provider reads the resources through the opener it is given, because a module encapsulates the resources
+of its packages: <code>be.imgn.toml</code> cannot read <code>com/example/Messages_fr_BE.toml</code>, but a method reference
+created in the module <code>com.example</code> can.</p>
+</div>
 <dl class="notes">
 <dt>Since:</dt>
 <dd>0.1.0</dd>

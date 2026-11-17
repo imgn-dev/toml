@@ -89,22 +89,20 @@ loadScripts(document, 'script');</script>
 <div class="horizontal-scroll">
 <div class="type-signature"><span class="modifiers">public final class </span><span class="element-name type-name-label">Toml</span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span></div>
-<div class="block">Parses and writes <a href="https://toml.io/en/v1.1.0">TOML 1.1</a> documents.
-
-<pre><code>TomlTable config = Toml.parse(file).root();
-int port = config.getInt("server.port");
+<div class="block"><p>Parses and writes <a href="https://toml.io/en/v1.1.0">TOML 1.1</a> documents.</p>
+<pre><code class="language-java">TomlTable config = Toml.parse(file).root();
+int port = config.getInt(&quot;server.port&quot;);
 
 Toml.write(config, CharSink.of(file, StandardCharsets.UTF_8));
 </code></pre>
-
 <p>The parser accepts every valid TOML 1.1 document, and rejects every invalid one with a <a href="TomlParseException.html" title="class in be.imgn.toml"><code>TomlParseException</code></a>.
-A document may start with a byte order mark, which is ignored. A parsed <a href="TomlDocument.html" title="class in be.imgn.toml"><code>TomlDocument</code></a> also tells where each of
-its keys and values is written, through its <a href="TomlPositions.html" title="class in be.imgn.toml"><code>TomlPositions</code></a>.
-
-<p>The writer writes the entries of a table before its subtables, and keeps the order of each. It writes nothing but
-the data: comments, blank lines and the choice between equivalent notations, such as a literal string or a dotted
-key, are not kept from a parsed document. It writes newlines as <code>\n</code>, and only TOML 1.0 notation, so that TOML
-1.0 parsers can read what it writes too.</div>
+A document may start with a byte order mark, which is ignored. A parsed <a href="TomlDocument.html" title="class in be.imgn.toml"><code>TomlDocument</code></a> also tells where each
+of its keys and values is written, through its <a href="TomlPositions.html" title="class in be.imgn.toml"><code>TomlPositions</code></a>.</p>
+<p>The writer writes the entries of a table before its subtables, and keeps the order of each. It writes
+nothing but the data: comments, blank lines and the choice between equivalent notations, such as a literal
+string or a dotted key, are not kept from a parsed document. It writes newlines as <code>\n</code>, and only TOML 1.0
+notation, so that TOML 1.0 parsers can read what it writes too.</p>
+</div>
 <dl class="notes">
 <dt>Since:</dt>
 <dd>0.1.0</dd>
@@ -187,8 +185,8 @@ says with the keys that no component takes.</div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#parse(java.nio.file.Path,java.lang.Class)" class="member-name-link">parse</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/file/Path.html" title="class or interface in java.nio.file" class="external-link">Path</a>&nbsp;file,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
-<div class="block">Parses a document read from a file, which must be UTF-8, as TOML requires, and binds it to a <a href="TomlConfig.html" title="annotation interface in be.imgn.toml"><code>TomlConfig</code></a>
-record.</div>
+<div class="block">Parses a document read from a file, which must be UTF-8, as TOML requires, and binds it to a
+<a href="TomlConfig.html" title="annotation interface in be.imgn.toml"><code>TomlConfig</code></a> record.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="TomlTable.html" title="class in be.imgn.toml">TomlTable</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#toTable(java.lang.Record)" class="member-name-link">toTable</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Record.html" title="class or interface in java.lang" class="external-link">Record</a>&nbsp;value)</code></div>
@@ -211,8 +209,8 @@ record.</div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#writeAtomically(be.imgn.toml.TomlTable,java.nio.file.Path)" class="member-name-link">writeAtomically</a><wbr>(<a href="TomlTable.html" title="class in be.imgn.toml">TomlTable</a>&nbsp;table,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/file/Path.html" title="class or interface in java.nio.file" class="external-link">Path</a>&nbsp;file)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
-<div class="block">Writes a table as a UTF-8 document to a file, atomically: readers, or the next run after a crash, see either the
-previous content of the file or the whole document, never a part of it.</div>
+<div class="block">Writes a table as a UTF-8 document to a file, atomically: readers, or the next run after a crash, see
+either the previous content of the file or the whole document, never a part of it.</div>
 </div>
 </div>
 </div>
@@ -399,8 +397,8 @@ previous content of the file or the whole document, never a part of it.</div>
 <div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="type-parameters">&lt;T&gt;</span>&nbsp;<span class="return-type">T</span>&nbsp;<span class="element-name">parse</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/file/Path.html" title="class or interface in java.nio.file" class="external-link">Path</a>&nbsp;file,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;T&gt;&nbsp;type)</span>
                    throws <span class="exceptions"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/IOException.html" title="class or interface in java.io" class="external-link">IOException</a></span></div>
-<div class="block">Parses a document read from a file, which must be UTF-8, as TOML requires, and binds it to a <a href="TomlConfig.html" title="annotation interface in be.imgn.toml"><code>TomlConfig</code></a>
-record.</div>
+<div class="block">Parses a document read from a file, which must be UTF-8, as TOML requires, and binds it to a
+<a href="TomlConfig.html" title="annotation interface in be.imgn.toml"><code>TomlConfig</code></a> record.</div>
 <dl class="notes">
 <dt>Type Parameters:</dt>
 <dd><span id="parse(java.nio.file.Path,java.lang.Class)-type-param-T"><code>T</code> - the type of the record</span></dd>
@@ -474,12 +472,12 @@ says with the keys that no component takes.</div>
 <h3>toTable</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="TomlTable.html" title="class in be.imgn.toml">TomlTable</a></span>&nbsp;<span class="element-name">toTable</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Record.html" title="class or interface in java.lang" class="external-link">Record</a>&nbsp;value)</span></div>
-<div class="block">Converts a <a href="TomlConfig.html" title="annotation interface in be.imgn.toml"><code>TomlConfig</code></a> record to a table, which binds back to an equal record.
-
-<p>Each component is the value of its key, in the form that <a href="TomlConfig.html" title="annotation interface in be.imgn.toml"><code>TomlConfig</code></a> binds: a <code>Duration</code> in
-ISO-8601, such as <code>"PT1M30S"</code>; a <code>Path</code> or a <code>URI</code> as its <code>toString()</code>; an enum as the
-key of its constant; a list or a set as an array, in its iteration order; a map or a record as a table. A null
-<code>@Nullable</code> component is left out.</div>
+<div class="block"><p>Converts a <a href="TomlConfig.html" title="annotation interface in be.imgn.toml"><code>TomlConfig</code></a> record to a table, which binds back to an equal record.</p>
+<p>Each component is the value of its key, in the form that <a href="TomlConfig.html" title="annotation interface in be.imgn.toml"><code>TomlConfig</code></a> binds: a <code>Duration</code> in ISO-8601,
+such as <code>&quot;PT1M30S&quot;</code>; a <code>Path</code> or a <code>URI</code> as its <code>toString()</code>; an enum as the key of its constant; a list
+or a set as an array, in its iteration order; a map or a record as a table. A null <code>@Nullable</code> component
+is left out.</p>
+</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>value</code> - the record</dd>
@@ -487,7 +485,7 @@ key of its constant; a list or a set as an array, in its iteration order; a map 
 <dd>the table</dd>
 <dt>Throws:</dt>
 <dd><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/IllegalArgumentException.html" title="class or interface in java.lang" class="external-link">IllegalArgumentException</a></code> - if no <a href="TomlBinder.html" title="interface in be.imgn.toml"><code>TomlBinder</code></a> is registered for the class of <code>value</code>, or if a
-    string in it contains an unpaired surrogate</dd>
+string in it contains an unpaired surrogate</dd>
 <dd><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/NullPointerException.html" title="class or interface in java.lang" class="external-link">NullPointerException</a></code> - if <code>value</code> is null, or a value in it that is not <code>@Nullable</code></dd>
 </dl>
 </div>
@@ -555,8 +553,9 @@ key of its constant; a list or a set as an array, in its iteration order; a map 
 <div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">writeAtomically</span><wbr><span class="parameters">(<a href="TomlTable.html" title="class in be.imgn.toml">TomlTable</a>&nbsp;table,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/file/Path.html" title="class or interface in java.nio.file" class="external-link">Path</a>&nbsp;file)</span>
                             throws <span class="exceptions"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/IOException.html" title="class or interface in java.io" class="external-link">IOException</a></span></div>
-<div class="block">Writes a table as a UTF-8 document to a file, atomically: readers, or the next run after a crash, see either the
-previous content of the file or the whole document, never a part of it. The file keeps its permissions.</div>
+<div class="block">Writes a table as a UTF-8 document to a file, atomically: readers, or the next run after a crash, see
+either the previous content of the file or the whole document, never a part of it. The file keeps its
+permissions.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>table</code> - the root table of the document</dd>

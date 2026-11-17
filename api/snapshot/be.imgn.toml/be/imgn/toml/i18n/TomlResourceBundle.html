@@ -96,34 +96,28 @@ loadScripts(document, 'script');</script>
 <div class="horizontal-scroll">
 <div class="type-signature"><span class="modifiers">public final class </span><span class="element-name type-name-label">TomlResourceBundle</span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/ResourceBundle.html" title="class or interface in java.util" class="external-link">ResourceBundle</a></span></div>
-<div class="block">A resource bundle whose resources are the values of a TOML table.
-
-<p>Tables are flattened into dotted keys: the document
-
-<pre><code>title = "Inventory"
+<div class="block"><p>A resource bundle whose resources are the values of a TOML table.</p>
+<p>Tables are flattened into dotted keys: the document</p>
+<pre><code class="language-toml">title = &quot;Inventory&quot;
 
 [errors]
-not-found = "No item {0}"
+not-found = &quot;No item {0}&quot;
 retries = 3
 </code></pre>
-
 <p>has the keys <code>title</code>, <code>errors.not-found</code> and <code>errors.retries</code>. Two values whose keys flatten to
-the same one, such as <code>"a.b" = 1</code> and <code>a.b = 2</code>, are an error.
-
+the same one, such as <code>&quot;a.b&quot; = 1</code> and <code>a.b = 2</code>, are an error.</p>
 <p>The values keep their TOML type: <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/ResourceBundle.html#getObject(java.lang.String)" title="class or interface in java.util" class="external-link"><code>ResourceBundle.getObject(String)</code></a> returns a <code>String</code>, a <code>Long</code>, a
 <code>Double</code>, a <code>Boolean</code>, an <code>OffsetDateTime</code>, a <code>LocalDateTime</code>, a <code>LocalDate</code> or a
 <code>LocalTime</code>, and an array of strings is a <code>String[]</code>, which <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/ResourceBundle.html#getStringArray(java.lang.String)" title="class or interface in java.util" class="external-link"><code>ResourceBundle.getStringArray(String)</code></a> returns. Any
 other array is an error. The typed getters, such as <a href="#getLong(java.lang.String)"><code>getLong(String)</code></a>, look the value up as
-<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/ResourceBundle.html#getObject(java.lang.String)" title="class or interface in java.util" class="external-link"><code>ResourceBundle.getObject(String)</code></a> does, through the parents of the bundle, and check its type.
-
+<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/ResourceBundle.html#getObject(java.lang.String)" title="class or interface in java.util" class="external-link"><code>ResourceBundle.getObject(String)</code></a> does, through the parents of the bundle, and check its type.</p>
 <p><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/ResourceBundle.html#getBundle(java.lang.String,java.util.Locale,java.util.ResourceBundle.Control)" title="class or interface in java.util" class="external-link"><code>ResourceBundle.getBundle(String, Locale, ResourceBundle.Control)</code></a> loads bundles from <code>.toml</code>
-resources, such as <code>Messages_fr_BE.toml</code>, with the control <a href="#control()"><code>control()</code></a> returns:
-
-<pre><code>ResourceBundle messages = ResourceBundle.getBundle("com.example.Messages", locale, TomlResourceBundle.control());
+resources, such as <code>Messages_fr_BE.toml</code>, with the control <a href="#control()"><code>control()</code></a> returns:</p>
+<pre><code class="language-java">ResourceBundle messages = ResourceBundle.getBundle(&quot;com.example.Messages&quot;, locale, TomlResourceBundle.control());
 </code></pre>
-
 <p>A named module cannot pass a control to <code>getBundle</code>: it loads its bundles through a
-<a href="TomlResourceBundleProvider.html" title="class in be.imgn.toml.i18n"><code>TomlResourceBundleProvider</code></a> instead.</div>
+<a href="TomlResourceBundleProvider.html" title="class in be.imgn.toml.i18n"><code>TomlResourceBundleProvider</code></a> instead.</p>
+</div>
 <dl class="notes">
 <dt>Since:</dt>
 <dd>0.1.0</dd>
@@ -261,8 +255,8 @@ resources, such as <code>Messages_fr_BE.toml</code>, with the control <a href="#
 <dd><code>table</code> - the table</dd>
 <dt>Throws:</dt>
 <dd><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/NullPointerException.html" title="class or interface in java.lang" class="external-link">NullPointerException</a></code> - if <code>table</code> is null</dd>
-<dd><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/IllegalArgumentException.html" title="class or interface in java.lang" class="external-link">IllegalArgumentException</a></code> - if two values have the same flattened key, or if an array has values that are
-    not strings</dd>
+<dd><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/IllegalArgumentException.html" title="class or interface in java.lang" class="external-link">IllegalArgumentException</a></code> - if two values have the same flattened key, or if an array has values
+that are not strings</dd>
 </dl>
 </div>
 </section>
@@ -280,13 +274,13 @@ resources, such as <code>Messages_fr_BE.toml</code>, with the control <a href="#
 <h3>control</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/ResourceBundle.Control.html" title="class or interface in java.util" class="external-link">ResourceBundle.Control</a></span>&nbsp;<span class="element-name">control</span>()</div>
-<div class="block">Returns a control that loads bundles from <code>.toml</code> resources, which must be UTF-8, as TOML requires. The
-resource of a bundle is named as <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/ResourceBundle.Control.html#toResourceName(java.lang.String,java.lang.String)" title="class or interface in java.util" class="external-link"><code>ResourceBundle.Control.toResourceName(String, String)</code></a> names it, with the
-suffix <code>toml</code>: the bundle <code>com.example.Messages</code> for the locale <code>fr_BE</code> is the resource
-<code>com/example/Messages_fr_BE.toml</code>.
-
+<div class="block"><p>Returns a control that loads bundles from <code>.toml</code> resources, which must be UTF-8, as TOML requires. The
+resource of a bundle is named as <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/ResourceBundle.Control.html#toResourceName(java.lang.String,java.lang.String)" title="class or interface in java.util" class="external-link"><code>ResourceBundle.Control.toResourceName(String, String)</code></a> names it, with
+the suffix <code>toml</code>: the bundle <code>com.example.Messages</code> for the locale <code>fr_BE</code> is the resource
+<code>com/example/Messages_fr_BE.toml</code>.</p>
 <p>A resource that is not valid TOML, or does not make a bundle, fails <code>getBundle</code> with a
-<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/MissingResourceException.html" title="class or interface in java.util" class="external-link"><code>MissingResourceException</code></a> whose cause tells why.</div>
+<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/MissingResourceException.html" title="class or interface in java.util" class="external-link">MissingResourceException</a> whose cause tells why.</p>
+</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>the control</dd>

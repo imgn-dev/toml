@@ -77,22 +77,22 @@ loadScripts(document, 'script');</script>
 <div class="horizontal-scroll">
 <div class="type-signature"><span class="modifiers">public final class </span><span class="element-name type-name-label">TomlPositions</span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span></div>
-<div class="block">Where the keys and values of a parsed document are written, to report a problem with one at its line and column.
-
-<pre><code>var document = Toml.parse(file);
-var save = document.root().getTable("commands.save");
-if (!save.entries().containsKey("command")) {
-    var position = document.positions().key(document.root().getTable("commands"), "save");
-    report(position.line(), position.column(), "[commands.save] names no command");
+<div class="block"><p>Where the keys and values of a parsed document are written, to report a problem with one at its line and
+column.</p>
+<pre><code class="language-java">var document = Toml.parse(file);
+var save = document.root().getTable(&quot;commands.save&quot;);
+if (!save.entries().containsKey(&quot;command&quot;)) {
+    var position = document.positions().key(document.root().getTable(&quot;commands&quot;), &quot;save&quot;);
+    report(position.line(), position.column(), &quot;[commands.save] names no command&quot;);
 }
 </code></pre>
-
-<p>A position is looked up by the table or array that holds the key or the element, which must be the very instance
-the parse returned: positions compare tables and arrays by identity, as equal tables can be written in several
-places. A copy of a table, such as one built from it with <a href="TomlTable.html#toBuilder()"><code>TomlTable.toBuilder()</code></a>, has no positions.
-
+<p>A position is looked up by the table or array that holds the key or the element, which must be the very
+instance the parse returned: positions compare tables and arrays by identity, as equal tables can be written
+in several places. A copy of a table, such as one built from it with <a href="TomlTable.html#toBuilder()"><code>TomlTable.toBuilder()</code></a>, has no
+positions.</p>
 <p>The key is a key of that table, never a dotted path: the position of <code>port</code> in <code>[server]</code> is
-<code>key(root.getTable("server"), "port")</code>.</div>
+<code>key(root.getTable(&quot;server&quot;), &quot;port&quot;)</code>.</p>
+</div>
 <dl class="notes">
 <dt>Since:</dt>
 <dd>0.1.0</dd>
@@ -153,11 +153,11 @@ places. A copy of a table, such as one built from it with <a href="TomlTable.htm
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="TomlPosition.html" title="class in be.imgn.toml">TomlPosition</a></span>&nbsp;<span class="element-name">key</span><wbr><span class="parameters">(<a href="TomlTable.html" title="class in be.imgn.toml">TomlTable</a>&nbsp;table,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;key)</span></div>
-<div class="block">Returns where a key of a table is written.
-
+<div class="block"><p>Returns where a key of a table is written.</p>
 <p>That is the key itself, or its own part of a dotted key: the position of <code>save</code> in
 <code>[commands.save]</code> is that of <code>save</code>. A table that is defined in several places, as a table implicitly
-defined by <code>[a.b]</code> and then by <code>[a]</code>, is at its header. An array of tables is at its first header.</div>
+defined by <code>[a.b]</code> and then by <code>[a]</code>, is at its header. An array of tables is at its first header.</p>
+</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>table</code> - a table of the document</dd>
@@ -177,12 +177,12 @@ defined by <code>[a.b]</code> and then by <code>[a]</code>, is at its header. An
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="TomlPosition.html" title="class in be.imgn.toml">TomlPosition</a></span>&nbsp;<span class="element-name">value</span><wbr><span class="parameters">(<a href="TomlTable.html" title="class in be.imgn.toml">TomlTable</a>&nbsp;table,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;key)</span></div>
-<div class="block">Returns where the value of a key of a table starts.
-
+<div class="block"><p>Returns where the value of a key of a table starts.</p>
 <p>That is the first character of the value, which is the opening bracket or brace of an array or an inline
-table. For a table defined by a header, it is the header's opening bracket, and for an array of tables, its first
-header's. A table that only exists as the parent of others, as <code>a</code> for <code>[a.b]</code> or <code>a.b = 1</code>, is
-at its key.</div>
+table. For a table defined by a header, it is the header's opening bracket, and for an array of tables,
+its first header's. A table that only exists as the parent of others, as <code>a</code> for <code>[a.b]</code> or <code>a.b = 1</code>,
+is at its key.</p>
+</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>table</code> - a table of the document</dd>
@@ -202,10 +202,10 @@ at its key.</div>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="TomlPosition.html" title="class in be.imgn.toml">TomlPosition</a></span>&nbsp;<span class="element-name">element</span><wbr><span class="parameters">(<a href="TomlArray.html" title="class in be.imgn.toml">TomlArray</a>&nbsp;array,
  int&nbsp;index)</span></div>
-<div class="block">Returns where an element of an array starts.
-
+<div class="block"><p>Returns where an element of an array starts.</p>
 <p>That is the first character of the element, as for <a href="#value(be.imgn.toml.TomlTable,java.lang.String)"><code>value(TomlTable, String)</code></a>. The element of an array
-of tables is at the opening bracket of its header.</div>
+of tables is at the opening bracket of its header.</p>
+</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>array</code> - an array of the document</dd>

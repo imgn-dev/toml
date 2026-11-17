@@ -110,14 +110,13 @@ loadScripts(document, 'script');</script>
 <div class="type-signature"><span class="modifiers">public record </span><span class="element-name type-name-label">TomlTable</span>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>, <a href="TomlValue.html" title="interface in be.imgn.toml">TomlValue</a>&gt;&nbsp;entries)
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Record.html" title="class or interface in java.lang" class="external-link">Record</a>
 implements <a href="TomlValue.html" title="interface in be.imgn.toml">TomlValue</a></span></div>
-<div class="block">A TOML table: keys mapped to values, in the order the keys were given or appeared in the document.
-
+<div class="block"><p>A TOML table: keys mapped to values, in the order the keys were given or appeared in the document.</p>
 <p>Besides <a href="#entries()"><code>entries()</code></a>, a table looks its values up by a TOML key, which can be dotted and quoted as in a
-document. <code>get("server.port")</code> is the value of the key <code>port</code> in the table <code>server</code>, and
-<code>get("site.\"example.com\"")</code> the value of the key <code>example.com</code> in the table <code>site</code>. The typed
-getters, such as <a href="#getString(java.lang.String)"><code>getString(String)</code></a>, also check the type of the value.
-
-<p>Two tables are equal when they have the same entries, whatever their order.</div>
+document. <code>get(&quot;server.port&quot;)</code> is the value of the key <code>port</code> in the table <code>server</code>, and
+<code>get(&quot;site.\&quot;example.com\&quot;&quot;)</code> the value of the key <code>example.com</code> in the table <code>site</code>. The typed
+getters, such as <a href="#getString(java.lang.String)"><code>getString(String)</code></a>, also check the type of the value.</p>
+<p>Two tables are equal when they have the same entries, whatever their order.</p>
+</div>
 <dl class="notes">
 <dt>Since:</dt>
 <dd>0.1.0</dd>
@@ -316,8 +315,8 @@ getters, such as <a href="#getString(java.lang.String)"><code>getString(String)<
 <h3>toBuilder</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="TomlTable.Builder.html" title="class in be.imgn.toml">TomlTable.Builder</a></span>&nbsp;<span class="element-name">toBuilder</span>()</div>
-<div class="block">Returns a builder that starts with the entries of this table, in their order. The builder does not change this
-table.</div>
+<div class="block">Returns a builder that starts with the entries of this table, in their order. The builder does not
+change this table.</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>a new builder</dd>

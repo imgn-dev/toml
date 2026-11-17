@@ -70,22 +70,20 @@ loadScripts(document, 'script');</script>
 <div class="horizontal-scroll">
 <div class="type-signature"><span class="modifiers">public sealed interface </span><span class="element-name type-name-label">TomlValue</span>
 <span class="permits">permits <a href="TomlTable.html" title="class in be.imgn.toml">TomlTable</a>, <a href="TomlArray.html" title="class in be.imgn.toml">TomlArray</a>, <a href="TomlString.html" title="class in be.imgn.toml">TomlString</a>, <a href="TomlInteger.html" title="class in be.imgn.toml">TomlInteger</a>, <a href="TomlFloat.html" title="class in be.imgn.toml">TomlFloat</a>, <a href="TomlBoolean.html" title="class in be.imgn.toml">TomlBoolean</a>, <a href="TomlOffsetDateTime.html" title="class in be.imgn.toml">TomlOffsetDateTime</a>, <a href="TomlLocalDateTime.html" title="class in be.imgn.toml">TomlLocalDateTime</a>, <a href="TomlLocalDate.html" title="class in be.imgn.toml">TomlLocalDate</a>, <a href="TomlLocalTime.html" title="class in be.imgn.toml">TomlLocalTime</a></span></div>
-<div class="block">A TOML value: a table, an array, or a scalar.
-
-<p>Values are immutable, and each one can be written as TOML: the constructors reject what TOML cannot represent,
-such as a date outside the years 0000 to 9999.
-
-<p>The hierarchy is sealed, so a <code>switch</code> over a value can cover every type:
-
-<pre><code>String describe(TomlValue value) {
+<div class="block"><p>A TOML value: a table, an array, or a scalar.</p>
+<p>Values are immutable, and each one can be written as TOML: the constructors reject what TOML cannot
+represent, such as a date outside the years 0000 to 9999.</p>
+<p>The hierarchy is sealed, so a <code>switch</code> over a value can cover every type:</p>
+<pre><code class="language-java">String describe(TomlValue value) {
     return switch (value) {
-        case TomlString(var s) -&gt; "the string " + s;
-        case TomlInteger(var i) -&gt; "the integer " + i;
-        case TomlTable table -&gt; "a table of " + table.entries().size() + " entries";
-        default -&gt; "something else";
+        case TomlString(var s) -&gt; &quot;the string &quot; + s;
+        case TomlInteger(var i) -&gt; &quot;the integer &quot; + i;
+        case TomlTable table -&gt; &quot;a table of &quot; + table.entries().size() + &quot; entries&quot;;
+        default -&gt; &quot;something else&quot;;
     };
 }
-</code></pre></div>
+</code></pre>
+</div>
 <dl class="notes">
 <dt>Since:</dt>
 <dd>0.1.0</dd>

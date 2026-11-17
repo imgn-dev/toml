@@ -68,50 +68,44 @@ loadScripts(document, 'script');</script>
 <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/annotation/Retention.html" title="class or interface in java.lang.annotation" class="external-link">@Retention</a>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/annotation/RetentionPolicy.html#CLASS" title="class or interface in java.lang.annotation" class="external-link">CLASS</a>)
 <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/annotation/Target.html" title="class or interface in java.lang.annotation" class="external-link">@Target</a>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/annotation/ElementType.html#TYPE" title="class or interface in java.lang.annotation" class="external-link">TYPE</a>)
 </span><span class="modifiers">public @interface </span><span class="element-name type-name-label">TomlConfig</span></div>
-<div class="block">Marks a record that documents bind to, with <a href="Toml.html#parse(java.lang.String,java.lang.Class)"><code>Toml.parse(String, Class)</code></a> or <a href="Toml.html#bind(be.imgn.toml.TomlTable,java.lang.Class)"><code>Toml.bind(TomlTable, Class)</code></a>.
-
-<pre><code>@TomlConfig
+<div class="block"><p>Marks a record that documents bind to, with <a href="Toml.html#parse(java.lang.String,java.lang.Class)"><code>Toml.parse(String, Class)</code></a> or <a href="Toml.html#bind(be.imgn.toml.TomlTable,java.lang.Class)"><code>Toml.bind(TomlTable, Class)</code></a>.</p>
+<pre><code class="language-java">@TomlConfig
 record AppConfig(String title, Server server, List&lt;Endpoint&gt; endpoints) {}
 record Server(String host, int port, @Nullable Duration timeout) {}
 record Endpoint(String path, Set&lt;String&gt; methods) {}
 
 AppConfig config = Toml.parse(file, AppConfig.class);
 </code></pre>
-
 <p>The annotation processor of the <code>be.imgn.toml:toml-processor</code> artifact generates the code that binds a table
 to the record, and registers it as a <a href="TomlBinder.html" title="interface in be.imgn.toml"><code>TomlBinder</code></a> service. It rejects at compile time a type it cannot bind.
-The records the record refers to are bound the same way, without the annotation.
-
+The records the record refers to are bound the same way, without the annotation.</p>
 <p>Each component of a record is the value of a key of the table, in kebab case: <code>timeoutSeconds</code> is the value
 of <code>timeout-seconds</code>. <a href="TomlKey.html" title="annotation interface in be.imgn.toml"><code>TomlKey</code></a> gives another key. A key the table lacks is an error, unless the
 component is annotated <code>@Nullable</code>, which makes it <code>null</code>. A key of the table that no component takes is
-an error too, unless the table is bound with <a href="UnknownKeys.html#IGNORE"><code>UnknownKeys.IGNORE</code></a>.
-
-<p>The values are bound as follows; anything else is an error, reported as a <a href="TomlMappingException.html" title="class in be.imgn.toml"><code>TomlMappingException</code></a>:
-
+an error too, unless the table is bound with <a href="UnknownKeys.html#IGNORE"><code>UnknownKeys.IGNORE</code></a>.</p>
+<p>The values are bound as follows; anything else is an error, reported as a <a href="TomlMappingException.html" title="class in be.imgn.toml"><code>TomlMappingException</code></a>:</p>
 <ul>
-  <li><code>String</code>, from a string;
-  <li><code>long</code>, <code>int</code>, <code>short</code> and <code>byte</code>, from an integer in their range;
-  <li><code>double</code> and <code>float</code>, from a float, or from an integer they represent exactly;
-  <li><code>boolean</code>, from a boolean;
-  <li><code>OffsetDateTime</code>, <code>LocalDateTime</code>, <code>LocalDate</code> and <code>LocalTime</code>, from the date-time of
-      the same kind;
-  <li>an enum, from a string naming a constant in kebab case: <code>READ_ONLY</code> is <code>"read-only"</code>, unless the
-      constant has a <a href="TomlKey.html" title="annotation interface in be.imgn.toml"><code>TomlKey</code></a>;
-  <li><code>Duration</code>, from a string in ISO-8601, as <code>"PT1M30S"</code>, or of amounts with units, as <code>"1m30s"</code>
-      (see <a href="TomlBindings.html#asDuration(be.imgn.toml.TomlValue,be.imgn.toml.TomlBindings.Context)"><code>TomlBindings.asDuration(TomlValue, TomlBindings.Context)</code></a>);
-  <li><code>Path</code>, from a string, on the default file system;
-  <li><code>URI</code>, from a string;
-  <li><code>List&lt;T&gt;</code> and <code>Set&lt;T&gt;</code>, from an array of values that bind to <code>T</code>; a set rejects duplicates;
-  <li><code>Map&lt;String, T&gt;</code>, from a table of values that bind to <code>T</code>, whatever their keys;
-  <li>a record, from a table;
-  <li><a href="TomlValue.html" title="interface in be.imgn.toml"><code>TomlValue</code></a> and its subtypes, as they are.
+<li><code>String</code>, from a string;</li>
+<li><code>long</code>, <code>int</code>, <code>short</code> and <code>byte</code>, from an integer in their range;</li>
+<li><code>double</code> and <code>float</code>, from a float, or from an integer they represent exactly;</li>
+<li><code>boolean</code>, from a boolean;</li>
+<li><code>OffsetDateTime</code>, <code>LocalDateTime</code>, <code>LocalDate</code> and <code>LocalTime</code>, from the date-time of
+the same kind;</li>
+<li>an enum, from a string naming a constant in kebab case: <code>READ_ONLY</code> is <code>&quot;read-only&quot;</code>, unless the
+constant has a <a href="TomlKey.html" title="annotation interface in be.imgn.toml"><code>TomlKey</code></a>;</li>
+<li><code>Duration</code>, from a string in ISO-8601, as <code>&quot;PT1M30S&quot;</code>, or of amounts with units, as <code>&quot;1m30s&quot;</code>
+(see <a href="TomlBindings.html#asDuration(be.imgn.toml.TomlValue,be.imgn.toml.TomlBindings.Context)"><code>TomlBindings.asDuration(TomlValue, TomlBindings.Context)</code></a>);</li>
+<li><code>Path</code>, from a string, on the default file system;</li>
+<li><code>URI</code>, from a string;</li>
+<li><code>List&lt;T&gt;</code> and <code>Set&lt;T&gt;</code>, from an array of values that bind to <code>T</code>; a set rejects duplicates;</li>
+<li><code>Map&lt;String, T&gt;</code>, from a table of values that bind to <code>T</code>, whatever their keys;</li>
+<li>a record, from a table;</li>
+<li><a href="TomlValue.html" title="interface in be.imgn.toml"><code>TomlValue</code></a> and its subtypes, as they are.</li>
 </ul>
-
-<p>The boxed types of the primitive types bind as the primitive types. Lists, sets and maps keep the order of the
-document, and cannot be modified.
-
-<p><a href="Toml.html#toTable(java.lang.Record)"><code>Toml.toTable(Record)</code></a> converts a record back to a table, in the forms above.</div>
+<p>The boxed types of the primitive types bind as the primitive types. Lists, sets and maps keep the order of
+the document, and cannot be modified.</p>
+<p><a href="Toml.html#toTable(java.lang.Record)"><code>Toml.toTable(Record)</code></a> converts a record back to a table, in the forms above.</p>
+</div>
 <dl class="notes">
 <dt>Since:</dt>
 <dd>0.1.0</dd>
